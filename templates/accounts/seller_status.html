@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block title %}Application status · {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+<div style="max-width:620px;margin:0 auto;">
+  <div class="page-head">
+    <div>
+      <h1>Seller application</h1>
+      <p>Here is where your store stands with the marketplace.</p>
+    </div>
+  </div>
+
+  {% if not store %}
+    <div class="panel empty-state">
+      <h3>You have not applied yet</h3>
+      <p>Submit your business details to start selling.</p>
+      <a href="{% url 'accounts:seller_onboard' %}" class="btn btn-primary">Open your store</a>
+    </div>
+  {% else %}
+    <div class="form-card">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap;">
+        <div>
+          <h2 style="margin:0;">{{ store.business_name }}</h2>
+          {% if store.tagline %}<p class="muted" style="margin:.2rem 0 0;">{{ store.tagline }}</p>{% endif %}
+        </div>
+        <span class="status status-{{ store.status|lower }}">{{ store.get_status_display }}</span>
+      </div>
+
+      <div class="divider"></div>
+
+      {% if store.status == "PENDING" %}
+        <div class="alert alert-info">
+          Your application is being reviewed by the marketplace team. You will be able to
+          list products as soon as it is approved.
+        </div>
+      {% elif store.status == "APPROVED" %}
+        <div class="alert alert-success">
+          Your store is approved. You can start listing products right away.
+        </div>
+        <a href="{% url 'sellers:dashboard' %}" class="btn btn-primary">Go to seller dashboard</a>
+      {% elif store.status == "REJECTED" %}
+        <div class="alert alert-error">
+          Your application was not approved{% if store.rejection_reason %}: {{ store.rejection_reason }}{% endif %}.
+          You can update your details and apply again.
+        </div>
+        <a href="{% url 'accounts:seller_onboard' %}" class="btn btn-primary">Update application</a>
+      {% elif store.status == "SUSPENDED" %}
+        <div class="alert alert-error">
+          Your store is currently suspended{% if store.rejection_reason %}: {{ store.rejection_reason }}{% endif %}.
+          Contact the marketplace team to restore it.
+        </div>
+      {% endif %}
+
+      <div class="divider"></div>
+
+      <table class="spec-table">
+        <tr><th>Business name</th><td>{{ store.business_name }}</td></tr>
+        <tr><th>Contact email</th><td>{{ store.contact_email|default:"-" }}</td></tr>
+        <tr><th>Contact phone</th><td>{{ store.contact_phone|default:"-" }}</td></tr>
+        <tr><th>Storefront</th><td><a href="{{ store.get_absolute_url }}">{{ store.get_absolute_url }}</a></td></tr>
+        <tr><th>Applied</th><td>{{ store.created_at|date:"d M Y" }}</td></tr>
+        {% if store.approved_at %}
+          <tr><th>Approved</th><td>{{ store.approved_at|date:"d M Y" }}</td></tr>
+        {% endif %}
+      </table>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

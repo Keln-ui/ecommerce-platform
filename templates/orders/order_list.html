@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block title %}Your orders · {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Your orders</h1>
+    <p>Track deliveries from every store you bought from.</p>
+  </div>
+  <a href="{% url 'catalog:product_list' %}" class="btn btn-secondary btn-sm">Continue shopping</a>
+</div>
+
+<div class="panel">
+  {% if orders %}
+    {% for order in orders %}{% include "includes/order_row.html" %}{% endfor %}
+    {% include "includes/pagination.html" %}
+  {% else %}
+    <div class="empty-state">
+      <h3>No orders yet</h3>
+      <p>Your purchases will appear here.</p>
+      <a href="{% url 'catalog:product_list' %}" class="btn btn-primary">Start shopping</a>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

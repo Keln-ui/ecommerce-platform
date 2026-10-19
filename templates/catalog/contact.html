@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block title %}Contact Us · {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+<div style="max-width: 800px; margin: 2rem auto; padding: 0 20px;">
+  <div class="page-head">
+    <h1>Contact Customer Service</h1>
+    <p>We're here to help. Send us a message and we'll get back to you as soon as possible.</p>
+  </div>
+
+  <div class="two-col">
+    <div class="form-card">
+      <h2 style="margin-top: 0;">Send us a message</h2>
+      <form method="post">
+        {% csrf_token %}
+        <div class="form-field">
+          <label for="name">Your Name</label>
+          <input type="text" id="name" name="name" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+        </div>
+        <div class="form-field">
+          <label for="email">Email Address</label>
+          <input type="email" id="email" name="email" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+        </div>
+        <div class="form-field">
+          <label for="subject">Subject</label>
+          <select id="subject" name="subject" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+            <option value="">Select a topic</option>
+            <option value="order">Order Issue</option>
+            <option value="payment">Payment Problem</option>
+            <option value="seller">Seller Question</option>
+            <option value="account">Account Help</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        <div class="form-field">
+          <label for="message">Message</label>
+          <textarea id="message" name="message" rows="5" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; resize: vertical;"></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary" style="width: 100%;">Send Message</button>
+      </form>
+    </div>
+
+    <div class="stack">
+      <div class="panel">
+        <h3>📧 Email Support</h3>
+        <p class="muted">jomokelvin1143@gmail.com</p>
+        <p class="muted">coresync@coresync.co.ke</p>
+        <p style="font-size: 0.9rem;">We typically respond within 24 hours.</p>
+      </div>
+
+      <div class="panel">
+        <h3>📞 WhatsApp</h3>
+        <p class="muted">0757924041</p>
+        <a href="https://wa.me/254757924041" class="btn btn-success btn-sm" style="width: 100%; margin-top: 10px;">Chat on WhatsApp</a>
+      </div>
+
+      <div class="panel">
+        <h3>💬 Live Chat</h3>
+        <p class="muted">Available 24/7</p>
+        <a href="#" class="btn btn-secondary btn-sm" style="width: 100%; margin-top: 10px;">Start Chat</a>
+      </div>
+
+      <div class="panel">
+        <h3>📚 Help Center</h3>
+        <p class="muted">Find answers in our FAQ</p>
+        <a href="{% url 'catalog:faq' %}" class="btn btn-secondary btn-sm" style="width: 100%; margin-top: 10px;">View FAQ</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block title %}Complete Payment · {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+<div style="max-width: 600px; margin: 2rem auto; padding: 0 20px;">
+  <div class="form-card">
+    <h1 style="margin-top: 0;">Complete Your Subscription</h1>
+    <p class="muted">Choose your payment method to activate your seller account.</p>
+
+    <div style="background: #f8f9ff; border: 2px solid #e3e6ec; border-radius: 12px; padding: 20px; margin: 20px 0;">
+      <h3 style="margin-top: 0;">{{ subscription.plan.name }}</h3>
+      <p style="font-size: 1.5rem; font-weight: bold; color: #2f5bea;">KSh{{ subscription.plan.price }}</p>
+      <p class="muted">{{ subscription.plan.plan_type }} plan</p>
+      {% if subscription.plan.description %}
+      <p style="margin-top: 10px;">{{ subscription.plan.description }}</p>
+      {% endif %}
+    </div>
+
+    <form method="post">
+      {% csrf_token %}
+      <div style="margin-bottom: 20px;">
+        <label style="display: block; margin-bottom: 10px; font-weight: bold;">Payment Method</label>
+        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+          <label style="flex: 1; min-width: 150px; padding: 15px; border: 2px solid #ddd; border-radius: 8px; cursor: pointer; text-align: center;">
+            <input type="radio" name="payment_method" value="card" checked>
+            💳 Credit Card
+          </label>
+          <label style="flex: 1; min-width: 150px; padding: 15px; border: 2px solid #ddd; border-radius: 8px; cursor: pointer; text-align: center;">
+            <input type="radio" name="payment_method" value="paypal">
+            🅿️ PayPal
+          </label>
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-primary" style="width: 100%; padding: 15px; font-size: 1.1rem;">
+        Pay KSh{{ subscription.plan.price }} & Activate Store
+      </button>
+    </form>
+
+    <p style="text-align: center; margin-top: 20px; font-size: 0.9rem; color: #666;">
+      This is a demo payment. In production, this would integrate with a real payment gateway.
+    </p>
+  </div>
+</div>
+{% endblock %}

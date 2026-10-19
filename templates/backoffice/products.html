@@ -1,0 +1,142 @@
+{% extends "backoffice/base.html" %}
+
+{% block title %}Products{% endblock %}
+{% block nav_products %}active{% endblock %}
+
+{% block content %}
+<div class="bo-head">
+  <div>
+    <h1>Products</h1>
+    <p>{{ counts.total }} product{{ counts.total|pluralize }} listed by sellers.</p>
+  </div>
+  <div class="bo-head-actions">
+    <a href="{% url 'admin:catalog_product_changelist' %}" class="btn btn-ghost">Open in Django admin</a>
+  </div>
+</div>
+
+<div class="kpi-grid">
+  <div class="kpi accent"><div class="kpi-label">Live</div><div class="kpi-value">{{ counts.active }}</div><div class="kpi-hint">visible in the storefront</div></div>
+  <div class="kpi warn"><div class="kpi-label">Low stock</div><div class="kpi-value">{{ counts.low_stock }}</div><div class="kpi-hint">at or below threshold</div></div>
+  <div class="kpi danger"><div class="kpi-label">Out of stock</div><div class="kpi-value">{{ counts.out_of_stock }}</div><div class="kpi-hint">not purchasable</div></div>
+  <div class="kpi"><div class="kpi-label">Hidden</div><div class="kpi-value">{{ counts.hidden }}</div><div class="kpi-hint">is_active is off</div></div>
+  <div class="kpi"><div class="kpi-label">Unapproved seller</div><div class="kpi-value">{{ counts.unapproved }}</div><div class="kpi-hint">hidden by moderation</div></div>
+</div>
+
+<div class="filter-chips">
+  <a class="chip {% if not state %}active{% endif %}" href="{% url 'backoffice:products' %}">All <b>{{ counts.total }}</b></a>
+  <a class="chip {% if state == 'active' %}active{% endif %}" href="?state=active">Live <b>{{ counts.active }}</b></a>
+  <a class="chip {% if state == 'low_stock' %}active{% endif %}" href="?state=low_stock">Low stock <b>{{ counts.low_stock }}</b></a>
+  <a class="chip {% if state == 'out_of_stock' %}active{% endif %}" href="?state=out_of_stock">Out of stock <b>{{ counts.out_of_stock }}</b></a>
+  <a class="chip {% if state == 'hidden' %}active{% endif %}" href="?state=hidden">Hidden <b>{{ counts.hidden }}</b></a>
+  <a class="chip {% if state == 'unapproved' %}active{% endif %}" href="?state=unapproved">Unapproved seller <b>{{ counts.unapproved }}</b></a>
+</div>
+
+<form method="get" class="filter-bar">
+  <input type="search" name="q" value="{{ query }}" placeholder="Search product name or SKU..." aria-label="Search products">
+  <select name="seller" aria-label="Store">
+    <option value="">Any store</option>
+    {% for store in sellers %}
+      <option value="{{ store.slug }}" {% if seller_slug == store.slug %}selected{% endif %}>{{ store.business_name }}</option>
+    {% endfor %}
+  </select>
+  <select name="category" aria-label="Category">
+    <option value="">Any category</option>
+    {% for category in categories %}
+      <option value="{{ category.slug }}" {% if category_slug == category.slug %}selected{% endif %}>{{ category.name }}</option>
+    {% endfor %}
+  </select>
+  <select name="state" aria-label="State">
+    <option value="">Any state</option>
+    <option value="active" {% if state == 'active' %}selected{% endif %}>Live only</option>
+    <option value="low_stock" {% if state == 'low_stock' %}selected{% endif %}>Low stock</option>
+    <option value="out_of_stock" {% if state == 'out_of_stock' %}selected{% endif %}>Out of stock</option>
+    <option value="hidden" {% if state == 'hidden' %}selected{% endif %}>Hidden</option>
+    <option value="unapproved" {% if state == 'unapproved' %}selected{% endif %}>Unapproved seller</option>
+  </select>
+  <button type="submit" class="btn btn-primary">Apply</button>
+  <a href="{% url 'backoffice:products' %}" class="btn btn-ghost">Reset</a>
+</form>
+
+<div class="card">
+  <div class="card-head">
+    <h2>{{ page_obj.paginator.count }} matching product{{ page_obj.paginator.count|pluralize }}</h2>
+    <span class="small muted">Toggling hides a product from buyers without deleting it</span>
+  </div>
+
+  {% if products %}
+    <div class="table-wrap">
+      <table class="data">
+        <thead>
+          <tr>
+            <th>Product</th>
+            <th>Store</th>
+            <th>Category</th>
+            <th class="num">Price</th>
+            <th class="num">Stock</th>
+            <th class="num">Sold</th>
+            <th class="num">Rating</th>
+            <th>State</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for product in products %}
+            <tr>
+              <td>
+                <a href="{{ product.get_absolute_url }}"><strong>{{ product.name|truncatechars:38 }}</strong></a><br>
+                <small class="muted">{{ product.sku }}</small>
+              </td>
+              <td class="small">
+                <a href="{% url 'backoffice:seller_detail' product.seller_id %}">{{ product.seller.business_name|truncatechars:20 }}</a><br>
+                <span class="muted">{{ product.seller.get_status_display }}</span>
+              </td>
+              <td class="small">{{ product.category.name }}</td>
+              <td class="num">
+                {{ product.price|floatformat:2 }}
+                {% if product.is_on_sale %}<br><small class="muted"><s>{{ product.compare_at_price|floatformat:2 }}</s> &minus;{{ product.discount_percent }}%</small>{% endif %}
+              </td>
+              <td class="num">
+                {% if product.is_out_of_stock %}
+                  <span class="pill pill-cancelled">Out</span>
+                {% elif product.is_low_stock %}
+                  <span class="pill pill-pending">{{ product.stock }}</span>
+                {% else %}{{ product.stock }}{% endif %}
+              </td>
+              <td class="num">{{ product.units_sold }}</td>
+              <td class="num">
+                {% if product.rating_count %}{{ product.rating_average }} <span class="muted">({{ product.rating_count }})</span>
+                {% else %}<span class="muted">&mdash;</span>{% endif %}
+              </td>
+              <td>
+                {% if product.is_active %}
+                  <span class="pill pill-approved">Live</span>
+                {% else %}
+                  <span class="pill pill-inactive">Hidden</span>
+                {% endif %}
+                {% if product.seller.status != "APPROVED" %}<br><span class="pill pill-suspended">Store {{ product.seller.get_status_display }}</span>{% endif %}
+                {% if product.is_featured %}<br><span class="pill pill-info">Featured</span>{% endif %}
+              </td>
+              <td class="actions">
+                <form method="post" action="{% url 'backoffice:product_toggle' product.pk %}" class="inline-form">
+                  {% csrf_token %}
+                  <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                  <button class="btn {% if product.is_active %}btn-ghost{% else %}btn-good{% endif %} btn-xs">
+                    {% if product.is_active %}Hide{% else %}List{% endif %}
+                  </button>
+                </form>
+                <a href="{% url 'admin:catalog_product_change' product.pk %}" class="btn btn-ghost btn-xs">Edit</a>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% include "backoffice/includes/pagination.html" %}
+  {% else %}
+    <div class="empty">
+      <h3>No products found</h3>
+      <p>Try a different search or clear the filters.</p>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

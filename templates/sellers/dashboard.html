@@ -1,0 +1,203 @@
+{% extends "base.html" %}
+
+{% block title %}Seller dashboard · {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>{{ store.business_name }}</h1>
+    <p>
+      <span class="status status-delivered">Approved</span>
+      &middot; <a href="{{ store.get_absolute_url }}">View your storefront</a>
+    </p>
+  </div>
+  <div style="display:flex;gap:.5rem;flex-wrap:wrap;">
+    <a href="{% url 'accounts:seller_settings' %}" class="btn btn-secondary btn-sm">Store settings</a>
+    <a href="{% url 'sellers:product_create' %}" class="btn btn-primary btn-sm">+ Add product</a>
+  </div>
+</div>
+
+<!-- Enhanced Stats Grid -->
+<div class="stat-grid">
+  <div class="stat-card">
+    <div class="label">Revenue</div>
+    <div class="value">{{ stats.revenue }}</div>
+    <div class="sub">across {{ stats.order_total }} orders</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">Your payout</div>
+    <div class="value">{{ stats.payout }}</div>
+    <div class="sub">after {{ stats.commission }} commission</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">Avg order value</div>
+    <div class="value">{{ avg_order_value }}</div>
+    <div class="sub">per transaction</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">Products</div>
+    <div class="value">{{ stats.product_total }}</div>
+    <div class="sub">{{ stats.active_total }} live in the storefront</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">Conversion rate</div>
+    <div class="value">{{ conversion_rate }}%</div>
+    <div class="sub">{{ total_views }} total views</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">Awaiting action</div>
+    <div class="value">{{ stats.pending_total }}</div>
+    <div class="sub">orders to prepare</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">Stock alerts</div>
+    <div class="value">{{ stats.out_of_stock }}</div>
+    <div class="sub">{{ stats.low_stock }} running low</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">Inventory value</div>
+    <div class="value">{{ inventory_value }}</div>
+    <div class="sub">total stock value</div>
+  </div>
+</div>
+
+<div class="two-col">
+  <div class="panel">
+    <div class="section-head">
+      <h2 style="margin:0;">Recent orders</h2>
+      <a href="{% url 'sellers:orders' %}">View all</a>
+    </div>
+    {% if recent_orders %}
+      {% for order in recent_orders %}
+        <div class="order-row">
+          <div class="order-row-main">
+            <a href="{% url 'orders:order_detail' order.order_number %}"><strong>{{ order.order_number }}</strong></a>
+            <span class="muted">{{ order.buyer.display_name }} · {{ order.item_count }} item{{ order.item_count|pluralize }}</span>
+          </div>
+          <div class="order-row-meta">
+            <span class="status status-{{ order.status|lower }}">{{ order.get_status_display }}</span>
+            <span class="order-total">{{ order.total }}</span>
+          </div>
+        </div>
+      {% endfor %}
+    {% else %}
+      <div class="empty-state">
+        <h3>No orders yet</h3>
+        <p>Orders from shoppers will show up here.</p>
+      </div>
+    {% endif %}
+  </div>
+
+  <aside class="stack">
+    <div class="panel">
+      <h3>Best sellers</h3>
+      {% if top_products %}
+        <table class="spec-table">
+          {% for product in top_products %}
+            <tr>
+              <td><a href="{% url 'sellers:product_edit' product.pk %}">{{ product.name|truncatechars:32 }}</a></td>
+              <td style="text-align:right;width:30%;"><strong>{{ product.units_sold }}</strong> sold</td>
+            </tr>
+          {% endfor %}
+        </table>
+      {% else %}
+        <p class="muted">No sales data yet.</p>
+      {% endif %}
+    </div>
+
+    <div class="panel panel-sm">
+      <h3>Quick actions</h3>
+      <a href="{% url 'sellers:product_create' %}" class="btn btn-primary btn-sm" style="width:100%;margin-bottom:.5rem;">Add a product</a>
+      <a href="{% url 'sellers:products' %}" class="btn btn-secondary btn-sm" style="width:100%;margin-bottom:.5rem;">Manage inventory</a>
+      <a href="{% url 'sellers:orders' %}?status=PAID" class="btn btn-secondary btn-sm" style="width:100%;">Orders to prepare</a>
+    </div>
+  </aside>
+</div>
+
+<!-- Recent Reviews Section -->
+<div class="panel" style="margin-top:1.5rem;">
+  <div class="section-head">
+    <h2 style="margin:0;">Recent customer reviews</h2>
+    <a href="{% url 'sellers:products' %}">View products</a>
+  </div>
+  {% if recent_reviews %}
+    <div style="display:grid;gap:1rem;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));">
+      {% for review in recent_reviews %}
+        <div style="padding:1rem;background:#fafbff;border:1px solid var(--line);border-radius:10px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem;">
+            <strong>{{ review.user.display_name }}</strong>
+            <span class="stars">{% for i in "12345" %}{% if forloop.counter <= review.rating %}&#9733;{% else %}&#9734;{% endif %}{% endfor %}</span>
+          </div>
+          <p style="margin:.5rem 0;font-size:.9rem;color:var(--ink-soft);">{{ review.product.name }}</p>
+          {% if review.title %}<p style="margin:0;font-size:.85rem;"><strong>{{ review.title }}</strong></p>{% endif %}
+          {% if review.comment %}<p style="margin:0;font-size:.85rem;">{{ review.comment|truncatewords:20 }}</p>{% endif %}
+          <small class="muted">{{ review.created_at|date:"M d, Y" }}</small>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <h3>No reviews yet</h3>
+      <p>Customer reviews will appear here once customers start reviewing your products.</p>
+    </div>
+  {% endif %}
+</div>
+
+<!-- Top Customers Section -->
+<div class="panel" style="margin-top:1.5rem;">
+  <div class="section-head">
+    <h2 style="margin:0;">Top customers</h2>
+    <span class="muted">By revenue</span>
+  </div>
+  {% if top_customers %}
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Customer</th>
+          <th class="num">Orders</th>
+          <th class="num">Revenue</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for customer in top_customers %}
+          <tr>
+            <td>{{ customer.buyer_name|default:customer.buyer__email }}</td>
+            <td class="num">{{ customer.orders }}</td>
+            <td class="num">{{ customer.revenue|floatformat:2 }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <div class="empty-state">
+      <h3>No customer data yet</h3>
+      <p>Customer insights will appear once you have sales.</p>
+    </div>
+  {% endif %}
+</div>
+
+<!-- Sales Trend Section -->
+{% if monthly_sales %}
+<div class="panel" style="margin-top:1.5rem;">
+  <div class="section-head">
+    <h2 style="margin:0;">Sales trend (last 6 months)</h2>
+    <span class="muted">Monthly revenue</span>
+  </div>
+  <div style="display:flex;gap:1rem;flex-wrap:wrap;align-items:flex-end;">
+    {% for month in monthly_sales %}
+      <div style="flex:1;min-width:120px;text-align:center;">
+        <div style="font-size:.8rem;color:var(--ink-soft);margin-bottom:.5rem;">
+          {{ month.month|date:"M Y" }}
+        </div>
+        <div style="font-size:1.3rem;font-weight:700;color:var(--brand);">
+          {{ month.revenue|floatformat:0 }}
+        </div>
+        <div style="font-size:.75rem;color:var(--ink-soft);">
+          {{ month.orders }} order{{ month.orders|pluralize }}
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+{% endblock %}

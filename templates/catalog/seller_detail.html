@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+
+{% block title %}{{ seller.business_name }} · {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+<div class="seller-banner" style="{% if seller.banner %}background-image:url('{{ seller.banner.url }}');background-size:cover;background-position:center;{% endif %}"></div>
+
+<div class="panel" style="margin-bottom:1.75rem;">
+  <div style="display:flex;gap:1.25rem;align-items:flex-start;flex-wrap:wrap;">
+    <div class="store-avatar" style="width:76px;height:76px;margin-top:-2rem;border:3px solid #fff;">
+      {% if seller.logo %}
+        <img src="{{ seller.logo.url }}" alt="">
+      {% else %}{{ seller.business_name|slice:":1"|upper }}{% endif %}
+    </div>
+    <div style="flex:1;min-width:240px;">
+      <h1 style="margin:0 0 .2rem;">{{ seller.business_name }}</h1>
+      {% if seller.tagline %}<p class="muted" style="margin:0 0 .5rem;">{{ seller.tagline }}</p>{% endif %}
+      <div class="rating-row">
+        {% if seller.rating_count %}
+          <span class="stars">{% for i in "12345" %}{% if forloop.counter <= seller.rating_average %}&#9733;{% else %}&#9734;{% endif %}{% endfor %}</span>
+          <span>{{ seller.rating_average }} · {{ seller.rating_count }} review{{ seller.rating_count|pluralize }}</span>
+        {% else %}
+          <span class="muted">New store</span>
+        {% endif %}
+        <span class="muted">· on the marketplace since {{ seller.created_at|date:"M Y" }}</span>
+      </div>
+      {% if seller.business_address %}
+        <p class="muted" style="margin:.5rem 0 0;font-size:.88rem;">{{ seller.business_address }}</p>
+      {% endif %}
+    </div>
+    <div class="stat-card" style="min-width:120px;text-align:center;">
+      <div class="value">{{ page_obj.paginator.count }}</div>
+      <div class="label">Products</div>
+    </div>
+  </div>
+
+  {% if seller.description %}
+    <div class="divider"></div>
+    <p style="white-space:pre-line;margin:0;">{{ seller.description }}</p>
+  {% endif %}
+</div>
+
+<div class="result-bar">
+  <h2 style="margin:0;">All products</h2>
+  <form method="get">
+    <label for="sort" class="muted">Sort by</label>
+    <select name="sort" id="sort" onchange="this.form.submit()">
+      <option value="">Newest</option>
+      <option value="popular">Best selling</option>
+      <option value="price_asc">Price: low to high</option>
+      <option value="price_desc">Price: high to low</option>
+      <option value="rating">Top rated</option>
+    </select>
+    <noscript><button type="submit" class="btn btn-sm">Go</button></noscript>
+  </form>
+</div>
+
+{% if products %}
+  <div class="product-grid">
+    {% for product in products %}{% include "includes/product_card.html" %}{% endfor %}
+  </div>
+  {% include "includes/pagination.html" %}
+{% else %}
+  <div class="panel empty-state">
+    <h3>This store has no products yet</h3>
+    <p>Check back soon.</p>
+  </div>
+{% endif %}
+{% endblock %}

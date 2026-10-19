@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block title %}FAQ · {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+<div style="max-width: 900px; margin: 2rem auto; padding: 0 20px;">
+  <div class="page-head">
+    <h1>Frequently Asked Questions</h1>
+    <p>Find answers to common questions about shopping and selling on {{ SITE_NAME }}.</p>
+  </div>
+
+  <div class="panel" style="margin-bottom: 2rem;">
+    <h2 style="margin-top: 0;">🛒 Buying & Shopping</h2>
+    
+    <div style="margin-bottom: 1.5rem;">
+      <h3 style="margin-bottom: 0.5rem;">How do I place an order?</h3>
+      <p class="muted">Simply browse products, add items to your cart, and proceed to checkout. You can shop from multiple sellers in a single transaction.</p>
+    </div>
+
+    <div style="margin-bottom: 1.5rem;">
+      <h3 style="margin-bottom: 0.5rem;">What payment methods do you accept?</h3>
+      <p class="muted">We accept credit cards, debit cards, and PayPal. All payments are processed securely.</p>
+    </div>
+
+    <div style="margin-bottom: 1.5rem;">
+      <h3 style="margin-bottom: 0.5rem;">How is shipping handled?</h3>
+      <p class="muted">Each seller handles their own shipping. You'll receive tracking information for each order. Standard shipping is KSh4.99 per seller order.</p>
+    </div>
+
+    <div style="margin-bottom: 1.5rem;">
+      <h3 style="margin-bottom: 0.5rem;">Can I cancel my order?</h3>
+      <p class="muted">You can cancel orders that haven't been shipped yet. Go to your order history and select the order you want to cancel.</p>
+    </div>
+
+    <div style="margin-bottom: 1.5rem;">
+      <h3 style="margin-bottom: 0.5rem;">What is your return policy?</h3>
+      <p class="muted">Return policies vary by seller. Check the product page or contact the seller directly for their specific return policy.</p>
+    </div>
+  </div>
+
+  <div class="panel" style="margin-bottom: 2rem;">
+    <h2 style="margin-top: 0;">🏪 Selling & Store Management</h2>
+    
+    <div style="margin-bottom: 1.5rem;">
+      <h3 style="margin-bottom: 0.5rem;">How do I become a seller?</h3>
+      <p class="muted">Click "Become a Seller" on the homepage or go to your profile and select "Start selling." Complete the onboarding form and wait for approval.</p>
+    </div>
+
+    <div style="margin-bottom: 1.5rem;">
+      <h3 style="margin-bottom: 0.5rem;">What fees do you charge?</h3>
+      <p class="muted">We charge an 8% commission on each sale. This is deducted from your earnings automatically.</p>
+    </div>
+
+    <div style="margin-bottom: 1.5rem;">
+      <h3 style="margin-bottom: 0.5rem;">When do I get paid?</h3>
+      <p class="muted">Payouts are processed monthly. You can view your earnings in the seller dashboard.</p>
+    </div>
+
+    <div style="margin-bottom: 1.5rem;">
+      <h3 style="margin-bottom: 0.5rem;">How do I manage my inventory?</h3>
+      <p class="muted">Use the seller dashboard to add, edit, and manage your products. You'll receive alerts when stock is low.</p>
+    </div>
+  </div>
+
+  <div class="panel" style="margin-bottom: 2rem;">
+    <h2 style="margin-top: 0;">🔐 Account & Security</h2>
+    
+    <div style="margin-bottom: 1.5rem;">
+      <h3 style="margin-bottom: 0.5rem;">How do I reset my password?</h3>
+      <p class="muted">Click "Forgot password" on the login page and enter your email. We'll send you a link to reset your password.</p>
+    </div>
+
+    <div style="margin-bottom: 1.5rem;">
+      <h3 style="margin-bottom: 0.5rem;">Is my payment information secure?</h3>
+      <p class="muted">Yes, we use industry-standard encryption to protect your payment information. We never store your full credit card details.</p>
+    </div>
+
+    <div style="margin-bottom: 1.5rem;">
+      <h3 style="margin-bottom: 0.5rem;">Can I have both buyer and seller accounts?</h3>
+      <p class="muted">Yes! You can shop as a buyer and also run a seller store with the same account. Just complete the seller onboarding to activate your store.</p>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2 style="margin-top: 0;">📞 Still need help?</h2>
+    <p class="muted">Can't find the answer you're looking for? Our customer service team is here to help.</p>
+    <a href="{% url 'catalog:contact' %}" class="btn btn-primary" style="margin-top: 10px;">Contact Customer Service</a>
+  </div>
+</div>
+{% endblock %}

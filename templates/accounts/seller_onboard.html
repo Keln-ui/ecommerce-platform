@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+
+{% block title %}Open your store · Marketa{% endblock %}
+
+{% block content %}
+<div style="max-width:680px;margin:0 auto;">
+  <div class="page-head">
+    <div>
+      <h1>Open your store</h1>
+      <p>Tell shoppers about your business. It takes about two minutes.</p>
+    </div>
+  </div>
+
+  <div class="form-card">
+    <form method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+      {{ form.non_field_errors }}
+
+      <div class="form-field">
+        <label for="{{ form.business_name.id_for_label }}">Business name *</label>
+        {{ form.business_name }}
+        {{ form.business_name.errors }}
+      </div>
+
+      <div class="form-field">
+        <label for="{{ form.tagline.id_for_label }}">Tagline</label>
+        {{ form.tagline }}
+        <span class="helptext">A short line shown under your store name.</span>
+        {{ form.tagline.errors }}
+      </div>
+
+      <div class="form-field">
+        <label for="{{ form.description.id_for_label }}">About your business</label>
+        {{ form.description }}
+        {{ form.description.errors }}
+      </div>
+
+      <div class="form-field">
+        <label for="{{ form.logo.id_for_label }}">Store logo</label>
+        {{ form.logo }}
+        <span class="helptext">Square image, up to 2 MB.</span>
+        {{ form.logo.errors }}
+      </div>
+
+      <div class="divider"></div>
+      <h3>Contact details</h3>
+
+      <div class="form-row">
+        <div class="form-field">
+          <label for="{{ form.contact_email.id_for_label }}">Contact email</label>
+          {{ form.contact_email }}
+          {{ form.contact_email.errors }}
+        </div>
+        <div class="form-field">
+          <label for="{{ form.contact_phone.id_for_label }}">Contact phone</label>
+          {{ form.contact_phone }}
+          {{ form.contact_phone.errors }}
+        </div>
+      </div>
+
+      <div class="form-field">
+        <label for="{{ form.business_address.id_for_label }}">Business address</label>
+        {{ form.business_address }}
+        {{ form.business_address.errors }}
+      </div>
+
+      <div class="form-field">
+        <label for="{{ form.tax_id.id_for_label }}">Tax / registration ID</label>
+        {{ form.tax_id }}
+        <span class="helptext">Optional, used for invoicing.</span>
+        {{ form.tax_id.errors }}
+      </div>
+
+      <div class="form-field">
+        <div class="checkbox-field">
+          {{ form.agree_terms }}
+          <label for="{{ form.agree_terms.id_for_label }}">{{ form.agree_terms.label }}</label>
+        </div>
+        {{ form.agree_terms.errors }}
+      </div>
+
+      <div class="divider"></div>
+      <h3>Choose Your Subscription Plan</h3>
+      <p class="muted">Select a plan to activate your seller account.</p>
+
+      {% if plans %}
+      <div style="display: grid; gap: 15px; margin: 20px 0;">
+        {% for plan in plans %}
+        <label style="padding: 20px; border: 2px solid #ddd; border-radius: 10px; cursor: pointer; display: block; transition: all 0.2s;" onmouseover="this.style.borderColor='#2f5bea'" onmouseout="this.style.borderColor='#ddd'">
+          <input type="radio" name="subscription_plan" value="{{ plan.id }}" required style="margin-right: 10px;">
+          <strong>{{ plan.name }}</strong> ({{ plan.plan_type }})
+          <div style="font-size: 1.5rem; font-weight: bold; color: #2f5bea; margin: 10px 0;">KSh{{ plan.price }}</div>
+          {% if plan.description %}
+          <p style="margin: 0; font-size: 0.9rem; color: #666;">{{ plan.description }}</p>
+          {% endif %}
+        </label>
+        {% endfor %}
+      </div>
+      {% else %}
+      <p class="muted">No subscription plans available. Please contact admin.</p>
+      {% endif %}
+
+      <button type="submit" class="btn btn-primary btn-lg">Submit application</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

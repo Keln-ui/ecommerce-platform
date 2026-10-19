@@ -1,0 +1,176 @@
+{% extends "backoffice/base.html" %}
+
+{% block title %}{{ store.business_name }}{% endblock %}
+{% block nav_sellers %}active{% endblock %}
+
+{% block content %}
+<div class="bo-crumb"><a href="{% url 'backoffice:sellers' %}">Sellers</a> / {{ store.business_name }}</div>
+
+<div class="bo-head">
+  <div>
+    <h1>{{ store.business_name }}
+      <span class="pill pill-{{ store.status|lower }}">{{ store.get_status_display }}</span>
+      {% if not store.is_active %}<span class="pill pill-inactive">Storefront closed</span>{% endif %}
+    </h1>
+    <p>{{ store.tagline|default:"No tagline yet" }}</p>
+  </div>
+  <div class="bo-head-actions">
+    <a href="{{ store.get_absolute_url }}" class="btn btn-ghost">View storefront</a>
+    <a href="{% url 'admin:accounts_sellerprofile_change' store.pk %}" class="btn btn-ghost">Django admin</a>
+  </div>
+</div>
+
+<div class="kpi-grid">
+  <div class="kpi accent">
+    <div class="kpi-label">Gross revenue</div>
+    <div class="kpi-value">{{ financials.revenue|floatformat:2 }}</div>
+    <div class="kpi-hint">{{ financials.orders }} settled order{{ financials.orders|pluralize }}</div>
+  </div>
+  <div class="kpi">
+    <div class="kpi-label">Commission earned</div>
+    <div class="kpi-value">{{ financials.commission|floatformat:2 }}</div>
+    <div class="kpi-hint">{{ commission_rate }}% platform cut</div>
+  </div>
+  <div class="kpi warn">
+    <div class="kpi-label">Seller payout</div>
+    <div class="kpi-value">{{ payout|floatformat:2 }}</div>
+    <div class="kpi-hint">revenue less commission</div>
+  </div>
+  <div class="kpi">
+    <div class="kpi-label">Products</div>
+    <div class="kpi-value">{{ product_stats.total }}</div>
+    <div class="kpi-hint">{{ product_stats.live }} live · {{ product_stats.out_of_stock }} out of stock</div>
+  </div>
+  <div class="kpi {% if product_stats.low_stock %}danger{% endif %}">
+    <div class="kpi-label">Units sold</div>
+    <div class="kpi-value">{{ product_stats.units }}</div>
+    <div class="kpi-hint">{{ product_stats.stock_on_hand }} in stock · {{ product_stats.low_stock }} low</div>
+  </div>
+</div>
+
+<div class="grid-2" style="margin-bottom:1.25rem;">
+  <div class="card">
+    <div class="card-head"><h2>Store details</h2></div>
+    <div class="card-pad">
+      <dl class="dl">
+        <dt>Owner</dt><dd>{{ store.user.display_name }}</dd>
+        <dt>Owner email</dt><dd>{{ store.user.email }}</dd>
+        <dt>Contact email</dt><dd>{{ store.contact_email|default:"—" }}</dd>
+        <dt>Contact phone</dt><dd>{{ store.contact_phone|default:"—" }}</dd>
+        <dt>Business address</dt><dd>{{ store.business_address|default:"—" }}</dd>
+        <dt>Tax ID</dt><dd>{{ store.tax_id|default:"—" }}</dd>
+        <dt>Applied</dt><dd>{{ store.created_at|date:"d M Y" }}</dd>
+        <dt>Approved</dt><dd>{{ store.approved_at|date:"d M Y"|default:"—" }}</dd>
+        <dt>Rating</dt>
+        <dd>{% if store.rating_count %}{{ store.rating_average }} ({{ store.rating_count }}){% else %}No reviews{% endif %}</dd>
+        <dt>Storefront</dt><dd><a href="{{ store.get_absolute_url }}">{{ store.slug }}</a></dd>
+      </dl>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><h2>Moderation</h2></div>
+    <div class="card-pad">
+      {% if store.status == "REJECTED" or store.status == "SUSPENDED" %}
+        {% if store.rejection_reason %}
+          <div class="alert alert-warning">Reason on record: {{ store.rejection_reason }}</div>
+        {% endif %}
+      {% endif %}
+
+      <form method="post" action="{% url 'backoffice:seller_status' store.pk %}" class="stack">
+        {% csrf_token %}
+        <input type="hidden" name="next" value="{{ request.get_full_path }}">
+        <div class="filter-bar" style="margin:0;">
+          <select name="status" aria-label="New status">
+            {% for value, label in status_choices %}
+              <option value="{{ value }}" {% if store.status == value %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+          <button class="btn btn-primary">Update status</button>
+        </div>
+        <input type="text" name="reason" placeholder="Optional note when rejecting or suspending">
+      </form>
+
+      <div class="divider" style="height:1px;background:var(--line);margin:1rem 0;"></div>
+
+      <form method="post" action="{% url 'backoffice:seller_status' store.pk %}">
+        {% csrf_token %}
+        <input type="hidden" name="next" value="{{ request.get_full_path }}">
+        {% if store.is_active %}
+          <button name="status" value="SUSPENDED" class="btn btn-bad btn-xs"
+                  onclick="return confirm('Suspend {{ store.business_name|escapejs }}? Their products will be hidden.');">
+            Suspend seller
+          </button>
+        {% else %}
+          <button name="status" value="APPROVED" class="btn btn-good btn-xs">Approve and reopen</button>
+        {% endif %}
+      </form>
+    </div>
+  </div>
+</div>
+
+<div class="grid-2">
+  <div class="card">
+    <div class="card-head">
+      <h2>Products ({{ product_stats.total }})</h2>
+      <a href="{% url 'backoffice:products' %}?seller={{ store.slug }}">All products</a>
+    </div>
+    <div class="table-wrap">
+      <table class="data">
+        <thead><tr><th>Product</th><th class="num">Price</th><th class="num">Stock</th><th class="num">Sold</th></tr></thead>
+        <tbody>
+          {% for product in products %}
+            <tr>
+              <td>
+                {{ product.name|truncatechars:32 }}<br>
+                <small class="muted">{{ product.category.name }} · {{ product.sku }}</small>
+              </td>
+              <td class="num">{{ product.price }}</td>
+              <td class="num">
+                {% if product.stock == 0 %}
+                  <span class="pill pill-cancelled">0</span>
+                {% elif product.is_low_stock %}
+                  <span class="pill pill-pending">{{ product.stock }}</span>
+                {% else %}{{ product.stock }}{% endif %}
+              </td>
+              <td class="num">{{ product.units_sold }}</td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="4" class="empty">This store has no products yet.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <h2>Recent orders ({{ order_count }})</h2>
+      <a href="{% url 'backoffice:orders' %}?q={{ store.business_name|urlencode }}">All orders</a>
+    </div>
+    <div class="table-wrap">
+      <table class="data">
+        <thead><tr><th>Order</th><th>Buyer</th><th>Status</th><th class="num">Total</th></tr></thead>
+        <tbody>
+          {% for order in orders %}
+            <tr>
+              <td>
+                <a href="{% url 'orders:order_detail' order.order_number %}"><strong>{{ order.order_number }}</strong></a><br>
+                <small class="muted">{{ order.placed_at|date:"d M Y" }}</small>
+              </td>
+              <td class="small">{{ order.buyer.display_name|truncatechars:20 }}</td>
+              <td><span class="pill pill-{{ order.status|lower }}">{{ order.get_status_display }}</span></td>
+              <td class="num">
+                {{ order.total }}<br>
+                <small class="muted">payout {{ order.seller_payout|floatformat:2 }}</small>
+              </td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="4" class="empty">No orders from this store yet.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

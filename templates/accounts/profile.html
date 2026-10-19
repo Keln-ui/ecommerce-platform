@@ -1,0 +1,260 @@
+{% extends "base.html" %}
+
+{% block title %}My profile · {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+<div class="profile-container">
+  <!-- Header -->
+  <div class="profile-header">
+    <div class="profile-avatar">
+      {{ user.first_name|slice:":1"|upper }}{{ user.last_name|slice:":1"|upper }}
+    </div>
+    <div class="profile-info">
+      <h1>{{ user.display_name }}</h1>
+      <p class="profile-email">{{ user.email }}</p>
+      <div class="profile-badges">
+        <span class="badge badge-{{ user.role|lower }}">{{ user.get_role_display }}</span>
+        {% if user.is_seller and user.can_sell %}
+          <span class="badge badge-seller-active">Active store</span>
+        {% elif user.is_seller %}
+          <span class="badge badge-seller-pending">Application {{ user.seller_profile.status }}</span>
+        {% endif %}
+      </div>
+    </div>
+    <div class="profile-actions">
+      <a href="{% url 'accounts:order_history' %}" class="btn btn-secondary btn-sm">My orders</a>
+      <a href="{% url 'orders:cart' %}" class="btn btn-primary btn-sm">View cart</a>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stat-grid">
+    <div class="stat-card stat-card--primary">
+      <div class="stat-icon">💰</div>
+      <div class="stat-label">Total spent</div>
+      <div class="stat-value">{{ total_spent }}</div>
+      <div class="stat-sub">across {{ total_orders }} order{{ total_orders|pluralize }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">📦</div>
+      <div class="stat-label">Avg order value</div>
+      <div class="stat-value">{{ avg_order_value }}</div>
+      <div class="stat-sub">per transaction</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">✍️</div>
+      <div class="stat-label">Reviews written</div>
+      <div class="stat-value">{{ user_reviews|length }}</div>
+      <div class="stat-sub">for products you bought</div>
+    </div>
+  </div>
+
+  <div class="profile-grid">
+    <!-- Left: Account actions & quick links -->
+    <aside class="profile-sidebar">
+      <div class="panel">
+        <h3>Your account</h3>
+        <div class="account-detail">
+          <div class="account-detail-label">Email</div>
+          <div class="account-detail-value">{{ user.email }}</div>
+        </div>
+        <div class="account-detail">
+          <div class="account-detail-label">Role</div>
+          <div class="account-detail-value">{{ user.get_role_display }}</div>
+        </div>
+        <div class="account-detail">
+          <div class="account-detail-label">Member since</div>
+          <div class="account-detail-value">{{ user.date_joined|date:"M d, Y" }}</div>
+        </div>
+
+        <div class="action-group" style="margin-top:1.5rem;">
+          {% if user.is_seller %}
+            {% if user.can_sell %}
+              <a href="{% url 'sellers:dashboard' %}" class="btn btn-primary btn-block btn-sm">Go to seller dashboard</a>
+              <a href="{% url 'accounts:seller_settings' %}" class="btn btn-secondary btn-block btn-sm">Store settings</a>
+            {% else %}
+              <a href="{% url 'accounts:seller_status' %}" class="btn btn-secondary btn-block btn-sm">View application status</a>
+            {% endif %}
+          {% else %}
+            <a href="{% url 'accounts:seller_onboard' %}" class="btn btn-secondary btn-block btn-sm">Start selling</a>
+          {% endif %}
+          {% if user.is_staff %}
+            <a href="{% url 'admin:index' %}" class="btn btn-outline btn-block btn-sm" style="background:#16181d;color:#fff;border-color:#16181d;">⚙️ Admin Panel</a>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="panel panel-sm">
+        <h3>Quick links</h3>
+        <a href="{% url 'orders:order_list' %}" class="btn btn-secondary btn-block btn-sm">View all orders</a>
+        <a href="{% url 'orders:cart' %}" class="btn btn-secondary btn-block btn-sm">View cart</a>
+        <a href="{% url 'catalog:product_list' %}" class="btn btn-secondary btn-block btn-sm">Browse products</a>
+      </div>
+    </aside>
+
+    <!-- Right: Profile form & content -->
+    <section class="profile-main">
+      <!-- Profile form -->
+      <div class="panel">
+        <div class="panel-head">
+          <h2 style="margin:0;">Profile information</h2>
+          <a href="#" class="btn btn-sm btn-link">Change password</a>
+        </div>
+        <form method="post">
+          {% csrf_token %}
+          <div class="form-grid">
+            <div class="form-field">
+              <label for="{{ form.first_name.id_for_label }}">First name</label>
+              {{ form.first_name }}
+              {{ form.first_name.errors }}
+            </div>
+            <div class="form-field">
+              <label for="{{ form.last_name.id_for_label }}">Last name</label>
+              {{ form.last_name }}
+              {{ form.last_name.errors }}
+            </div>
+            <div class="form-field">
+              <label for="{{ form.email.id_for_label }}">Email address</label>
+              {{ form.email }}
+              {{ form.email.errors }}
+            </div>
+            <div class="form-field">
+              <label for="{{ form.phone.id_for_label }}">Phone number</label>
+              {{ form.phone }}
+              {{ form.phone.errors }}
+            </div>
+            <div class="form-field">
+              <label for="{{ form.address_line1.id_for_label }}">Address line 1</label>
+              {{ form.address_line1 }}
+              {{ form.address_line1.errors }}
+            </div>
+            <div class="form-field">
+              <label for="{{ form.address_line2.id_for_label }}">Address line 2</label>
+              {{ form.address_line2 }}
+              {{ form.address_line2.errors }}
+            </div>
+            <div class="form-field">
+              <label for="{{ form.city.id_for_label }}">City</label>
+              {{ form.city }}
+              {{ form.city.errors }}
+            </div>
+            <div class="form-field">
+              <label for="{{ form.postal_code.id_for_label }}">Postal code</label>
+              {{ form.postal_code }}
+              {{ form.postal_code.errors }}
+            </div>
+            <div class="form-field">
+              <label for="{{ form.country.id_for_label }}">Country</label>
+              {{ form.country }}
+              {{ form.country.errors }}
+            </div>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Save changes</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Favorite sellers -->
+      {% if favorite_sellers %}
+      <div class="panel" style="margin-top:1.5rem;">
+        <div class="panel-head">
+          <h2 style="margin:0;">Favorite sellers</h2>
+          <span class="panel-sub">By order count</span>
+        </div>
+        <div class="seller-list">
+          {% for seller in favorite_sellers %}
+            <div class="seller-item">
+              <div class="seller-item-avatar">
+                {{ seller.seller__business_name|slice:":1"|upper }}
+              </div>
+              <div class="seller-item-info">
+                <div class="seller-item-name">{{ seller.seller__business_name|truncatechars:30 }}</div>
+                <div class="seller-item-meta">{{ seller.order_count }} order{{ seller.order_count|pluralize }}</div>
+              </div>
+              <a href="{% url 'catalog:seller_detail' seller.seller__slug %}" class="btn btn-outline btn-sm">Visit</a>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Recent purchases -->
+      {% if recent_purchases %}
+      <div class="panel" style="margin-top:1.5rem;">
+        <div class="panel-head">
+          <h2 style="margin:0;">Recent purchases</h2>
+          <a href="{% url 'orders:order_list' %}" class="panel-link">View all</a>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Order</th>
+                <th>Seller</th>
+                <th>Status</th>
+                <th class="num">Total</th>
+                <th class="num">Date</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for order in recent_purchases %}
+                <tr>
+                  <td>
+                    <a href="{% url 'orders:order_detail' order.order_number %}" class="order-link">{{ order.order_number }}</a>
+                    <br><small class="muted">{{ order.placed_at|date:"M d, Y" }}</small>
+                  </td>
+                  <td>{{ order.seller.business_name|truncatechars:25 }}</td>
+                  <td><span class="status status-{{ order.status|lower }}">{{ order.get_status_display }}</span></td>
+                  <td class="num">{{ order.total }}</td>
+                  <td class="num muted">{{ order.placed_at|date:"M d, Y" }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- My reviews -->
+      {% if user_reviews %}
+      <div class="panel" style="margin-top:1.5rem;">
+        <div class="panel-head">
+          <h2 style="margin:0;">My reviews</h2>
+          <span class="panel-sub">{{ user_reviews|length }} review{{ user_reviews|length|pluralize }}</span>
+        </div>
+        <div class="review-list">
+          {% for review in user_reviews %}
+            <div class="review-card">
+              <div class="review-card-head">
+                <div>
+                  <strong class="review-card-product">{{ review.product.name|truncatechars:35 }}</strong>
+                  <div class="review-card-meta">
+                    <span class="review-stars">{% for i in "12345" %}{% if forloop.counter <= review.rating %}&#9733;{% else %}&#9734;{% endif %}{% endfor %}</span>
+                    <span class="review-card-date">{{ review.created_at|date:"M d, Y" }}</span>
+                  </div>
+                </div>
+              </div>
+              {% if review.title %}
+                <div class="review-card-title">{{ review.title }}</div>
+              {% endif %}
+              {% if review.comment %}
+                <div class="review-card-body">{{ review.comment|truncatewords:20 }}</div>
+              {% endif %}
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+      {% if not favorite_sellers and not recent_purchases and not user_reviews %}
+      <div class="empty-state">
+        <h3>No activity yet</h3>
+        <p>Start shopping to see your orders, favorite sellers, and reviews here.</p>
+        <a href="{% url 'catalog:product_list' %}" class="btn btn-primary">Browse products</a>
+      </div>
+      {% endif %}
+    </section>
+  </div>
+</div>
+{% endblock %}

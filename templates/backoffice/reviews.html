@@ -1,0 +1,107 @@
+{% extends "backoffice/base.html" %}
+
+{% block title %}Reviews{% endblock %}
+{% block nav_reviews %}active{% endblock %}
+{% block pip_reviews %}{% if pending %}<span class="pip">{{ pending }}</span>{% endif %}{% endblock %}
+
+{% block content %}
+<div class="bo-head">
+  <div>
+    <h1>Reviews</h1>
+    <p>{{ total }} review{{ total|pluralize }} submitted by buyers.</p>
+  </div>
+  <div class="bo-head-actions">
+    <a href="{% url 'admin:catalog_review_changelist' %}" class="btn btn-ghost">Open in Django admin</a>
+  </div>
+</div>
+
+{% if pending %}
+  <div class="alert alert-warning">
+    {{ pending }} review{{ pending|pluralize }} awaiting moderation. Hidden reviews do not count toward product ratings.
+  </div>
+{% endif %}
+
+<div class="filter-chips">
+  <a class="chip {% if not state %}active{% endif %}" href="{% url 'backoffice:reviews' %}">All <b>{{ total }}</b></a>
+  <a class="chip {% if state == 'pending' %}active{% endif %}" href="?state=pending">Awaiting moderation <b>{{ pending }}</b></a>
+  <a class="chip {% if state == 'low' %}active{% endif %}" href="?state=low">Low rating (1-2 star) <b>{{ low }}</b></a>
+</div>
+
+<form method="post" action="{% url 'backoffice:reviews_bulk' %}">
+  {% csrf_token %}
+  <input type="hidden" name="next" value="{{ request.get_full_path }}">
+  <div class="card">
+    <div class="card-head">
+      <h2>{{ page_obj.paginator.count }} matching review{{ page_obj.paginator.count|pluralize }}</h2>
+      <div style="display:flex;gap:.4rem;align-items:center;">
+        <select name="action" aria-label="Bulk action">
+          <option value="">Bulk action…</option>
+          <option value="approve">Publish</option>
+          <option value="hide">Hide</option>
+        </select>
+        <button type="submit" class="btn btn-primary btn-xs">Apply</button>
+      </div>
+    </div>
+
+    {% if reviews %}
+      <div class="table-wrap">
+        <table class="data">
+          <thead>
+            <tr>
+              <th style="width:32px;"><input type="checkbox" data-toggle-all aria-label="Select all"></th>
+              <th style="width:74px;">Rating</th>
+              <th>Review</th>
+              <th>Product</th>
+              <th>Store</th>
+              <th>State</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for review in reviews %}
+              <tr>
+                <td><input type="checkbox" name="review_ids" value="{{ review.pk }}" aria-label="Select review by {{ review.user.email }}"></td>
+                <td>
+                  <span class="pill {% if review.rating <= 2 %}pill-cancelled{% elif review.rating == 3 %}pill-pending{% else %}pill-approved{% endif %}">
+                    {{ review.rating }} star{{ review.rating|pluralize }}
+                  </span>
+                </td>
+                <td>
+                  {% if review.title %}<strong>{{ review.title }}</strong><br>{% endif %}
+                  <span class="small">{{ review.comment|default:"No written comment."|truncatechars:110 }}</span><br>
+                  <small class="muted">{{ review.user.display_name|truncatechars:24 }} · {{ review.created_at|date:"d M Y" }}</small>
+                </td>
+                <td class="small"><a href="{{ review.product.get_absolute_url }}">{{ review.product.name|truncatechars:28 }}</a></td>
+                <td class="small muted">{{ review.product.seller.business_name|truncatechars:20 }}</td>
+                <td>
+                  {% if review.is_approved %}
+                    <span class="pill pill-approved">Published</span>
+                  {% else %}
+                    <span class="pill pill-inactive">Hidden</span>
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% include "backoffice/includes/pagination.html" %}
+    {% else %}
+      <div class="empty">
+        <h3>No reviews found</h3>
+        <p>Try a different filter.</p>
+      </div>
+    {% endif %}
+  </div>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.querySelectorAll("[data-toggle-all]").forEach(function (master) {
+  master.addEventListener("change", function () {
+    var rows = document.querySelectorAll("input[name='review_ids']");
+    for (var i = 0; i < rows.length; i++) rows[i].checked = master.checked;
+  });
+});
+</script>
+{% endblock %}

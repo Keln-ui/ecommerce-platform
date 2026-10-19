@@ -1,0 +1,82 @@
+{% load static %}<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}Dashboard{% endblock %} · {{ SITE_NAME }}</title>
+<link rel="stylesheet" href="{% static 'css/backoffice.css' %}">
+{% block head %}{% endblock %}
+</head>
+<body data-theme="light">
+<div class="bo-shell">
+
+  <aside class="bo-side">
+    <a href="{% url 'backoffice:overview' %}" class="bo-brand">
+      <span class="bo-brand-mark">MV</span>
+      <span class="bo-brand-text">{{ SITE_NAME }}<small>Back office</small></span>
+    </a>
+
+    <nav class="bo-nav">
+      <span class="bo-nav-label">Overview</span>
+      <a href="{% url 'backoffice:overview' %}" class="{% block nav_overview %}{% endblock %}">Dashboard</a>
+      <a href="{% url 'backoffice:reports' %}" class="{% block nav_reports %}{% endblock %}">Reports</a>
+
+      <span class="bo-nav-label">People</span>
+      <a href="{% url 'backoffice:sellers' %}" class="{% block nav_sellers %}{% endblock %}">
+        Sellers
+        {% block pip_sellers %}{% endblock %}
+      </a>
+      <a href="{% url 'backoffice:customers' %}" class="{% block nav_customers %}{% endblock %}">Customers</a>
+
+      <span class="bo-nav-label">Commerce</span>
+      <a href="{% url 'backoffice:orders' %}" class="{% block nav_orders %}{% endblock %}">Orders</a>
+      <a href="{% url 'backoffice:products' %}" class="{% block nav_products %}{% endblock %}">Products</a>
+      <a href="{% url 'backoffice:reviews' %}" class="{% block nav_reviews %}{% endblock %}">
+        Reviews
+        {% block pip_reviews %}{% endblock %}
+      </a>
+    </nav>
+
+    <div class="bo-side-foot">
+      <button id="themeToggle" type="button" class="btn btn-ghost btn-xs" style="width:100%;">Toggle dark mode</button>
+      <a href="{% url 'admin:index' %}">Django admin &rarr;</a>
+      <a href="{% url 'catalog:home' %}">View storefront &rarr;</a>
+      <form action="{% url 'accounts:logout' %}" method="post">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-ghost btn-xs" style="width:100%;">Sign out</button>
+      </form>
+    </div>
+  </aside>
+
+  <main class="bo-main">
+    {% if messages %}
+      {% for message in messages %}
+        <div class="alert alert-{{ message.tags|default:'info' }}">{{ message }}</div>
+      {% endfor %}
+    {% endif %}
+
+    {% block content %}{% endblock %}
+  </main>
+
+</div>
+
+{% block scripts %}{% endblock %}
+<script>
+  (function () {
+    const body = document.body;
+    const toggle = document.getElementById('themeToggle');
+    const stored = localStorage.getItem('bo-theme');
+    if (stored === 'dark') {
+      body.setAttribute('data-theme', 'dark');
+    }
+    if (toggle) {
+      toggle.addEventListener('click', function () {
+        const next = body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+        body.setAttribute('data-theme', next);
+        localStorage.setItem('bo-theme', next);
+      });
+    }
+  })();
+</script>
+</body>
+</html>

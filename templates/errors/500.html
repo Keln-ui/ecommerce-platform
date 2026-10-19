@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+{% block title %}Server error · {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+<div class="panel empty-state">
+  <h1 style="margin:.5rem 0;">500</h1>
+  <h3>Something went wrong on our side</h3>
+  <p>Please try again in a moment.</p>
+  <a href="{% url 'catalog:home' %}" class="btn btn-primary">Back to home</a>
+</div>
+{% endblock %}

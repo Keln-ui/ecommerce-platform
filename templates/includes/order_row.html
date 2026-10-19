@@ -1,0 +1,13 @@
+{% comment %}Order summary row. Expects `order`.{% endcomment %}
+<div class="order-row">
+  <div class="order-row-main">
+    <a href="{{ order.get_absolute_url }}"><strong>{{ order.order_number }}</strong></a>
+    <span class="muted">from <a href="{{ order.seller.get_absolute_url }}">{{ order.seller.business_name }}</a></span>
+  </div>
+  <div class="order-row-meta">
+    <span class="status status-{{ order.status|lower }}">{{ order.get_status_display }}</span>
+    <span class="order-date">{{ order.placed_at|date:"d M Y" }}</span>
+    <span class="order-total">{{ order.total }}</span>
+    <a href="{{ order.get_absolute_url }}" class="link-btn">View</a>
+  </div>
+</div>

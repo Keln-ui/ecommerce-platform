@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block title %}Create account · {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+<div style="max-width:520px;margin:2rem auto;">
+  <div class="form-card">
+    <h1 style="margin-top:0;">Create your account</h1>
+    <p class="muted">All you need is an email address. You can open a seller store later.</p>
+
+    <div class="divider" style="margin:1.5rem 0;"><span>or sign up with email</span></div>
+
+    <form method="post">
+      {% csrf_token %}
+      {{ form.non_field_errors }}
+      <div class="form-row">
+        <div class="form-field">
+          <label for="{{ form.first_name.id_for_label }}">First name</label>
+          {{ form.first_name }}
+          {{ form.first_name.errors }}
+        </div>
+        <div class="form-field">
+          <label for="{{ form.last_name.id_for_label }}">Last name</label>
+          {{ form.last_name }}
+          {{ form.last_name.errors }}
+        </div>
+      </div>
+      {% for field in form %}
+        {% if field.name not in "first_name last_name" %}
+          <div class="form-field">
+            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+            {{ field }}
+            {% if field.help_text %}<span class="helptext">{{ field.help_text }}</span>{% endif %}
+            {{ field.errors }}
+          </div>
+        {% endif %}
+      {% endfor %}
+      <button type="submit" class="btn btn-primary" style="width:100%;">Create account</button>
+    </form>
+
+    <div class="divider"></div>
+    <p class="muted centered" style="margin:0;">
+      Already registered? <a href="{% url 'accounts:login' %}">Log in</a>
+    </p>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,609 @@
+{% extends "backoffice/base.html" %}
+{% load static %}
+
+{% block title %}Dashboard{% endblock %}
+{% block nav_overview %}active{% endblock %}
+
+{% block content %}
+<div class="bo-head">
+  <div>
+    <h1>Operations Dashboard</h1>
+    <p>Marketplace performance over the last {{ days }} day{{ days|pluralize }}.</p>
+  </div>
+  <div class="bo-head-actions">
+    <div class="filter-chips" style="margin:0;">
+      {% for value, label in range_choices %}
+        <a class="chip {% if value == days %}active{% endif %}"
+           href="?days={{ value }}">{{ label }}</a>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<div class="hero-panel card enhanced-hero">
+  <div class="hero-copy">
+    <span class="eyebrow">Marketplace Pulse</span>
+    <h2>Marketplace Overview</h2>
+    <p>Monitor performance, track key metrics, and stay on top of marketplace operations.</p>
+  </div>
+  <div class="hero-actions">
+    <a class="btn btn-primary" href="{% url 'backoffice:sellers' %}">Review Sellers</a>
+    <a class="btn btn-ghost" href="{% url 'backoffice:reviews' %}?state=pending">Moderate Reviews</a>
+    <a class="btn btn-ghost" href="{% url 'backoffice:products' %}?state=low_stock">Inventory Alerts</a>
+    <a class="btn btn-ghost" href="{% url 'backoffice:export_dashboard_csv' %}">Export CSV</a>
+  </div>
+</div>
+
+<div class="priority-grid">
+  {% for task in priority_tasks %}
+    <div class="priority-card {% if task.tone == 'warning' %}warning{% elif task.tone == 'danger' %}danger{% elif task.tone == 'info' %}info{% else %}neutral{% endif %}">
+      <div class="priority-head">
+        <span class="priority-tag">{{ task.title }}</span>
+        <span class="priority-count">{{ task.meta }}</span>
+      </div>
+      <a href="{% url task.link %}">{{ task.link_label }}</a>
+    </div>
+  {% endfor %}
+</div>
+
+<div class="kpi-grid">
+  {% for kpi in kpis %}
+    <div class="kpi {% if forloop.counter == 1 %}accent{% elif forloop.counter == 3 %}warn{% elif forloop.counter == 7 %}danger{% endif %}">
+      <div class="kpi-label">{{ kpi.label }}</div>
+      <div class="kpi-value">{{ kpi.value }}</div>
+      <div class="kpi-hint">
+        {% if kpi.growth is not None %}
+          <span class="kpi-growth {% if kpi.growth >= 0 %}up{% else %}down{% endif %}">
+            {% if kpi.growth >= 0 %}+{% else %}{{ kpi.growth }}%{% endif %}
+          </span>
+          &nbsp;{{ kpi.hint }}
+        {% else %}
+          {{ kpi.hint }}
+        {% endif %}
+      </div>
+    </div>
+  {% endfor %}
+</div>
+
+<!-- Performance Metrics Section -->
+<div class="section-metrics">
+  <div class="card">
+    <div class="card-head">
+      <h2>Performance Metrics</h2>
+      <span class="small muted">Key performance indicators</span>
+    </div>
+    <div class="metrics-grid">
+      <div class="metric-item">
+        <div class="metric-label">Conversion Rate</div>
+        <div class="metric-value">{{ conversion_rate }}%</div>
+        <div class="metric-hint">Visits to orders</div>
+      </div>
+      <div class="metric-item">
+        <div class="metric-label">Avg Items/Order</div>
+        <div class="metric-value">{{ avg_items_per_order }}</div>
+        <div class="metric-hint">Items per transaction</div>
+      </div>
+      <div class="metric-item">
+        <div class="metric-label">Free Shipping Rate</div>
+        <div class="metric-value">{{ free_shipping_rate }}%</div>
+        <div class="metric-hint">Orders with free shipping</div>
+      </div>
+      <div class="metric-item">
+        <div class="metric-label">Total Visits</div>
+        <div class="metric-value">{{ total_visits }}</div>
+        <div class="metric-hint">Product page views</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="grid-2" style="margin-bottom:1.25rem;">
+  <div class="card">
+    <div class="card-head">
+      <h2>Operational Pulse</h2>
+      <span class="small muted">Live attention queue</span>
+    </div>
+    <div class="signal-list">
+      <div class="signal-row">
+        <span class="signal-badge warning">{{ pending_sellers_count }}</span>
+        <div>
+          <strong>Pending sellers</strong>
+          <small>Need approval before storefronts go live.</small>
+        </div>
+        <a href="{% url 'backoffice:sellers' %}?status=PENDING">Open</a>
+      </div>
+      <div class="signal-row">
+        <span class="signal-badge danger">{{ review_queue }}</span>
+        <div>
+          <strong>Reviews to moderate</strong>
+          <small>Pending or low-signal customer feedback.</small>
+        </div>
+        <a href="{% url 'backoffice:reviews' %}?state=pending">Open</a>
+      </div>
+      <div class="signal-row">
+        <span class="signal-badge info">{{ fulfilment_queue }}</span>
+        <div>
+          <strong>Orders awaiting fulfilment</strong>
+          <small>Payments and shipments still in motion.</small>
+        </div>
+        <a href="{% url 'backoffice:orders' %}?status=PAID">Open</a>
+      </div>
+      <div class="signal-row">
+        <span class="signal-badge muted">{{ low_stock }}</span>
+        <div>
+          <strong>Low-stock items</strong>
+          <small>Inventory is close to its threshold.</small>
+        </div>
+        <a href="{% url 'backoffice:products' %}?state=low_stock">Open</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <h2>Seller Health</h2>
+      <span class="small muted">Approval mix</span>
+    </div>
+    <div class="health-stack">
+      {% for row in seller_health_summary %}
+        <div class="health-row">
+          <div class="health-meta">
+            <span>{{ row.label }}</span>
+            <strong>{{ row.count }}</strong>
+          </div>
+          <div class="health-bar">
+            <div class="health-fill" style="width: {{ row.width }}%;"></div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<div class="chart-row">
+  <div class="card">
+    <div class="card-head">
+      <h2>Revenue over time</h2>
+      <span class="small muted">Gross merchandise value per day</span>
+    </div>
+    <div class="chart-box"><canvas id="revenueChart"></canvas></div>
+    <details class="chart-data">
+      <summary>View as table</summary>
+      <div class="chart-fallback">
+        <table>
+          <thead><tr><th>Date</th><th class="num">Revenue</th><th class="num">Commission</th><th class="num">Orders</th></tr></thead>
+          <tbody>
+            {% for row in series %}{% if row.orders %}
+              <tr>
+                <td>{{ row.date|date:"d M" }}</td>
+                <td class="num">{{ row.revenue|floatformat:2 }}</td>
+                <td class="num">{{ row.commission|floatformat:2 }}</td>
+                <td class="num">{{ row.orders }}</td>
+              </tr>
+            {% endif %}{% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </details>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><h2>Orders by status</h2></div>
+    <div class="chart-box"><canvas id="statusChart"></canvas></div>
+    <details class="chart-data">
+      <summary>View as table</summary>
+      <div class="chart-fallback">
+        <table>
+          <thead><tr><th>Status</th><th class="num">Orders</th></tr></thead>
+          <tbody>
+            {% for row in status_breakdown %}
+              <tr><td>{{ row.label }}</td><td class="num">{{ row.count }}</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </details>
+  </div>
+</div>
+
+<div class="grid-2" style="margin-bottom:1.25rem;">
+  <div class="card">
+    <div class="card-head">
+      <h2>Top sellers by revenue</h2>
+      <a href="{% url 'backoffice:sellers' %}">All sellers</a>
+    </div>
+    <div class="chart-box" style="height:230px;"><canvas id="sellerChart"></canvas></div>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><h2>Revenue by category</h2></div>
+    <div class="chart-box" style="height:230px;"><canvas id="categoryChart"></canvas></div>
+  </div>
+</div>
+
+<!-- Activity Feed Section -->
+<div class="section-activity">
+  <div class="card">
+    <div class="card-head">
+      <h2>Recent Activity</h2>
+      <span class="small muted">Latest marketplace activity</span>
+    </div>
+    <div class="activity-feed">
+      <div class="activity-section">
+        <h3>New Users</h3>
+        {% if recent_users %}
+          <div class="activity-list">
+            {% for user in recent_users %}
+              <div class="activity-item">
+                <span class="activity-icon user-icon">👤</span>
+                <div class="activity-content">
+                  <strong>{{ user.display_name }}</strong>
+                  <small class="muted">{{ user.email }}</small>
+                </div>
+                <small class="activity-time">{{ user.date_joined|date:"d M, H:i" }}</small>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <p class="empty-text">No recent user registrations</p>
+        {% endif %}
+      </div>
+
+      <div class="activity-section">
+        <h3>New Products</h3>
+        {% if recent_products %}
+          <div class="activity-list">
+            {% for product in recent_products %}
+              <div class="activity-item">
+                <span class="activity-icon product-icon">📦</span>
+                <div class="activity-content">
+                  <strong>{{ product.name|truncatechars:35 }}</strong>
+                  <small class="muted">{{ product.seller.business_name }}</small>
+                </div>
+                <small class="activity-time">{{ product.created_at|date:"d M, H:i" }}</small>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <p class="empty-text">No recent product listings</p>
+        {% endif %}
+      </div>
+
+      <div class="activity-section">
+        <h3>Recent Reviews</h3>
+        {% if recent_reviews_list %}
+          <div class="activity-list">
+            {% for review in recent_reviews_list %}
+              <div class="activity-item">
+                <span class="activity-icon review-icon">⭐</span>
+                <div class="activity-content">
+                  <strong>{{ review.user.display_name }}</strong>
+                  <small class="muted">reviewed {{ review.product.name|truncatechars:30 }}</small>
+                </div>
+                <small class="activity-time">{{ review.created_at|date:"d M, H:i" }}</small>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <p class="empty-text">No recent reviews</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Customer Insights Section -->
+<div class="section-customers">
+  <div class="card">
+    <div class="card-head">
+      <h2>Customer Insights</h2>
+      <span class="small muted">Top buyers and repeat customers</span>
+    </div>
+    <div class="grid-2">
+      <div>
+        <h3>Top Buyers</h3>
+        {% if top_buyers %}
+          <div class="customer-list">
+            {% for buyer in top_buyers %}
+              <div class="customer-item">
+                <div class="customer-info">
+                  <strong>{{ buyer.buyer__email|truncatechars:35 }}</strong>
+                  <small class="muted">{{ buyer.orders }} orders</small>
+                </div>
+                <div class="customer-revenue">KSh{{ buyer.revenue|floatformat:2 }}</div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <p class="empty-text">No buyer data available</p>
+        {% endif %}
+      </div>
+      <div>
+        <h3>Repeat Customers</h3>
+        {% if repeat_customers %}
+          <div class="customer-list">
+            {% for customer in repeat_customers %}
+              <div class="customer-item">
+                <div class="customer-info">
+                  <strong>{{ customer.display_name }}</strong>
+                  <small class="muted">{{ customer.email }}</small>
+                </div>
+                <div class="customer-orders">{{ customer.order_count }} orders</div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <p class="empty-text">No repeat customers yet</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="grid-2" style="margin-bottom:1.25rem;">
+  <div class="card">
+    <div class="card-head">
+      <h2>Sellers awaiting approval</h2>
+      {% if pending_sellers %}<span class="pill pill-pending">{{ pending_sellers|length }} pending</span>{% endif %}
+    </div>
+    {% if pending_sellers %}
+      <div class="table-wrap">
+        <table class="data">
+          <thead><tr><th>Store</th><th>Contact</th><th>Applied</th><th></th></tr></thead>
+          <tbody>
+            {% for store in pending_sellers %}
+              <tr>
+                <td>
+                  <div class="cell-main">
+                    <span class="cell-avatar">{{ store.business_name|slice:":1"|upper }}</span>
+                    <span class="cell-stack">
+                      <a href="{% url 'backoffice:seller_detail' store.pk %}"><strong>{{ store.business_name }}</strong></a>
+                      <small>{{ store.business_address|default:"No address given"|truncatechars:28 }}</small>
+                    </span>
+                  </div>
+                </td>
+                <td class="small">{{ store.contact_email|default:store.user.email }}</td>
+                <td class="small muted">{{ store.created_at|date:"d M" }}</td>
+                <td class="actions">
+                  <form method="post" action="{% url 'backoffice:seller_status' store.pk %}" class="inline-form">
+                    {% csrf_token %}
+                    <input type="hidden" name="status" value="APPROVED">
+                    <button class="btn btn-good btn-xs">Approve</button>
+                  </form>
+                  <form method="post" action="{% url 'backoffice:seller_status' store.pk %}" class="inline-form">
+                    {% csrf_token %}
+                    <input type="hidden" name="status" value="REJECTED">
+                    <button class="btn btn-bad btn-xs">Reject</button>
+                  </form>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="empty">
+        <h3>Nothing waiting</h3>
+        <p>All seller applications have been reviewed.</p>
+      </div>
+    {% endif %}
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <h2>Low stock alerts</h2>
+      <a href="{% url 'backoffice:products' %}?state=low_stock">All products</a>
+    </div>
+    {% if stock_alerts %}
+      <div class="table-wrap">
+        <table class="data">
+          <thead><tr><th>Product</th><th>Seller</th><th class="num">Stock</th></tr></thead>
+          <tbody>
+            {% for product in stock_alerts %}
+              <tr>
+                <td><a href="{% url 'backoffice:products' %}?q={{ product.name|urlencode }}">{{ product.name|truncatechars:34 }}</a></td>
+                <td class="small muted">{{ product.seller.business_name|truncatechars:22 }}</td>
+                <td class="num">
+                  {% if product.stock == 0 %}
+                    <span class="pill pill-cancelled">Out</span>
+                  {% else %}
+                    <span class="pill pill-pending">{{ product.stock }}</span>
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="empty">
+        <h3>Stock levels are healthy</h3>
+        <p>No product is at or below its low-stock threshold.</p>
+      </div>
+    {% endif %}
+  </div>
+</div>
+
+<div class="grid-2">
+  <div class="card">
+    <div class="card-head">
+      <h2>Latest orders</h2>
+      <a href="{% url 'backoffice:orders' %}">All orders</a>
+    </div>
+    <div class="table-wrap">
+      <table class="data">
+        <thead><tr><th>Order</th><th>Seller</th><th>Status</th><th class="num">Total</th></tr></thead>
+        <tbody>
+          {% for order in recent_orders %}
+            <tr>
+              <td>
+                <a href="{% url 'orders:order_detail' order.order_number %}"><strong>{{ order.order_number }}</strong></a>
+                <br><small class="muted">{{ order.placed_at|date:"d M, H:i" }} · {{ order.buyer.email|truncatechars:22 }}</small>
+              </td>
+              <td class="small">{{ order.seller.business_name|truncatechars:20 }}</td>
+              <td><span class="pill pill-{{ order.status|lower }}">{{ order.get_status_display }}</span></td>
+              <td class="num">{{ order.total }}</td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="4" class="empty">No orders in this period.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><h2>Best selling products</h2></div>
+    <div class="table-wrap">
+      <table class="data">
+        <thead><tr><th>Product</th><th>Seller</th><th class="num">Units</th><th class="num">Revenue</th></tr></thead>
+        <tbody>
+          {% for row in top_products %}
+            <tr>
+              <td>{{ row.product_name|truncatechars:30 }}</td>
+              <td class="small muted">{{ row.product__seller__business_name|truncatechars:20 }}</td>
+              <td class="num">{{ row.units }}</td>
+              <td class="num">{{ row.revenue|floatformat:2 }}</td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="4" class="empty">No sales in this period.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{# json_script emits real JSON (dates/Decimals handled) and escapes HTML safely. #}
+{{ series|json_script:"bo-series" }}
+{{ status_breakdown|json_script:"bo-status" }}
+{{ top_sellers|json_script:"bo-sellers" }}
+{{ category_rows|json_script:"bo-categories" }}
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+(function () {
+  if (typeof Chart === "undefined") return; // charts are an enhancement; tables carry the data
+
+  function read(id) {
+    var el = document.getElementById(id);
+    return el ? JSON.parse(el.textContent) : [];
+  }
+
+  Chart.defaults.font.family = "Inter, system-ui, sans-serif";
+  Chart.defaults.font.size = 11;
+  Chart.defaults.color = "#6b7382";
+
+  var grid = { color: "#eceff4" };
+  var series = read("bo-series");
+
+  var revenue = document.getElementById("revenueChart");
+  if (revenue) {
+    new Chart(revenue, {
+      type: "line",
+      data: {
+        labels: series.map(function (r) {
+          return new Date(r.date).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+        }),
+        datasets: [
+          {
+            label: "Revenue",
+            data: series.map(function (r) { return r.revenue; }),
+            borderColor: "#2f5bea",
+            backgroundColor: "rgba(47,91,234,.12)",
+            fill: true,
+            tension: .3,
+            pointRadius: 0,
+            pointHoverRadius: 4,
+            borderWidth: 2
+          },
+          {
+            label: "Commission",
+            data: series.map(function (r) { return r.commission; }),
+            borderColor: "#0f9d58",
+            backgroundColor: "rgba(15,157,88,.10)",
+            fill: true,
+            tension: .3,
+            pointRadius: 0,
+            pointHoverRadius: 4,
+            borderWidth: 2
+          }
+        ]
+      },
+      options: {
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { position: "bottom", labels: { usePointStyle: true, boxWidth: 8 } },
+          tooltip: { callbacks: { label: function (c) { return c.dataset.label + ": " + c.parsed.y.toFixed(2); } } }
+        },
+        scales: {
+          x: { grid: { display: false }, ticks: { maxTicksLimit: 12 } },
+          y: { beginAtZero: true, grid: grid, ticks: { callback: function (v) { return v; } } }
+        }
+      }
+    });
+  }
+
+  var status = document.getElementById("statusChart");
+  if (status) {
+    var breakdown = read("bo-status");
+    new Chart(status, {
+      type: "doughnut",
+      data: {
+        labels: breakdown.map(function (b) { return b.label; }),
+        datasets: [{
+          data: breakdown.map(function (b) { return b.count; }),
+          backgroundColor: ["#2f5bea", "#0f9d58", "#c77700", "#0b5fa5", "#c62828", "#6b7382", "#5b21b6"]
+        }]
+      },
+      options: {
+        maintainAspectRatio: false,
+        cutout: "58%",
+        plugins: { legend: { position: "bottom", labels: { usePointStyle: true, boxWidth: 8 } } }
+      }
+    });
+  }
+
+  var sellers = document.getElementById("sellerChart");
+  if (sellers) {
+    var rows = read("bo-sellers");
+    new Chart(sellers, {
+      type: "bar",
+      data: {
+        labels: rows.map(function (r) { return r.seller__business_name; }),
+        datasets: [{ label: "Revenue", data: rows.map(function (r) { return parseFloat(r.revenue); }),
+          backgroundColor: "#2f5bea", borderRadius: 4, maxBarThickness: 26 }]
+      },
+      options: {
+        indexAxis: "y",
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false },
+          tooltip: { callbacks: { label: function (c) { return c.parsed.x.toFixed(2); } } } },
+        scales: { x: { beginAtZero: true, grid: grid }, y: { grid: { display: false } } }
+      }
+    });
+  }
+
+  var categories = document.getElementById("categoryChart");
+  if (categories) {
+    var cats = read("bo-categories");
+    new Chart(categories, {
+      type: "bar",
+      data: {
+        labels: cats.map(function (c) { return c.product__category__name; }),
+        datasets: [{ label: "Revenue", data: cats.map(function (c) { return parseFloat(c.revenue); }),
+          backgroundColor: "#6f42c1", borderRadius: 4, maxBarThickness: 34 }]
+      },
+      options: {
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false },
+          tooltip: { callbacks: { label: function (c) { return c.parsed.y.toFixed(2); } } } },
+        scales: { x: { grid: { display: false } }, y: { beginAtZero: true, grid: grid } }
+      }
+    });
+  }
+})();
+</script>
+{% endblock %}

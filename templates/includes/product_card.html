@@ -1,0 +1,40 @@
+{% comment %}Product tile. Expects `product` in context.{% endcomment %}
+<article class="product-card">
+  <a href="{{ product.get_absolute_url }}" class="product-card-media">
+    {% with img=product.primary_image %}
+      {% if img %}
+        <img src="{{ img.image.url }}" alt="{{ img.alt_text|default:product.name }}" loading="lazy">
+      {% else %}
+        <div class="placeholder-img">{{ product.name|slice:":1"|upper }}</div>
+      {% endif %}
+    {% endwith %}
+    <div class="card-flags">
+      {% if product.discount_percent %}<span class="flag flag-sale">-{{ product.discount_percent }}%</span>{% endif %}
+      {% if product.is_featured %}<span class="flag flag-featured">Featured</span>{% endif %}
+      {% if product.is_out_of_stock %}<span class="flag flag-out">Out of stock</span>{% endif %}
+    </div>
+  </a>
+
+  <div class="product-card-body">
+    <a href="{{ product.seller.get_absolute_url }}" class="store-link">{{ product.seller.business_name }}</a>
+    <h3><a href="{{ product.get_absolute_url }}">{{ product.name }}</a></h3>
+
+    <div class="rating-row">
+      {% if product.rating_count %}
+        <span class="stars">{% for i in "12345" %}{% if forloop.counter <= product.rating_average %}&#9733;{% else %}&#9734;{% endif %}{% endfor %}</span>
+        <small>{{ product.rating_average }} ({{ product.rating_count }})</small>
+      {% else %}
+        <small class="muted">No reviews yet</small>
+      {% endif %}
+    </div>
+
+    <div class="price-row">
+      <span class="price">{{ product.price }}</span>
+      {% if product.is_on_sale %}
+        <span class="price-was">{{ product.compare_at_price }}</span>
+      {% endif %}
+    </div>
+
+    {% if product.is_low_stock %}<small class="stock-warning">Only {{ product.stock }} left</small>{% endif %}
+  </div>
+</article>

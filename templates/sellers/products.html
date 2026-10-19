@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+
+{% block title %}My products · {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+<div class="dashboard-header">
+  <div class="container">
+    <div class="dashboard-head">
+      <div>
+        <h1 style="margin:0 0 .25rem; font-size:1.5rem;">My products</h1>
+        <p style="margin:0; color:var(--ink-soft);">{{ page_obj.paginator.count }} product{{ page_obj.paginator.count|pluralize }} in your catalog</p>
+      </div>
+      <a href="{% url 'sellers:product_create' %}" class="btn btn-primary">+ Add product</a>
+    </div>
+
+    <!-- Quick stats -->
+    <div class="dashboard-stats">
+      <div class="stat">
+        <div class="stat-value" style="color:var(--brand);">{{ stats.active_total }}</div>
+        <div class="stat-label">Live</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value" style="color:#6b7280;">{{ stats.inactive_total }}</div>
+        <div class="stat-label">Hidden</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value" style="color:var(--danger);">{{ stats.out_of_stock }}</div>
+        <div class="stat-label">Out of stock</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value" style="color:var(--warn);">{{ stats.low_stock }}</div>
+        <div class="stat-label">Low stock</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Filter bar -->
+<div class="container dashboard-filters">
+  <form method="get" class="filter-bar">
+    <input type="search" name="q" value="{{ query }}" placeholder="Search your products…" aria-label="Search your products">
+    <select name="status" aria-label="Filter by status">
+      <option value="">All statuses</option>
+      <option value="active" {% if status == "active" %}selected{% endif %}>Live</option>
+      <option value="inactive" {% if status == "inactive" %}selected{% endif %}>Hidden</option>
+      <option value="out_of_stock" {% if status == "out_of_stock" %}selected{% endif %}>Out of stock</option>
+      <option value="low_stock" {% if status == "low_stock" %}selected{% endif %}>Low stock</option>
+    </select>
+    {% if query or status %}
+      <a href="{% url 'sellers:products' %}" class="btn btn-outline btn-sm">Clear filters</a>
+    {% endif %}
+    <button type="submit" class="btn btn-secondary btn-sm">Filter</button>
+  </form>
+</div>
+
+<div class="container product-dashboard">
+  {% if products %}
+    <div class="product-grid-compact">
+      {% for product in products %}
+        <article class="product-card-seller">
+          <div class="product-media">
+            {% if product.primary_image %}
+              <img src="{{ product.primary_image.image.url }}" alt="{{ product.primary_image.alt_text|default:product.name }}" loading="lazy">
+            {% else %}
+              <div class="placeholder-img-sm">{{ product.name|slice:":1"|upper }}</div>
+            {% endif %}
+            {% if not product.is_active %}
+              <span class="status-tag hidden">Hidden</span>
+            {% elif product.is_out_of_stock %}
+              <span class="status-tag out">Out of stock</span>
+            {% elif product.is_low_stock %}
+              <span class="status-tag low">Low stock</span>
+            {% else %}
+              <span class="status-tag live">Live</span>
+            {% endif %}
+          </div>
+
+          <div class="product-info">
+            <div class="product-meta">
+              <a href="{{ product.get_absolute_url }}" class="product-name">{{ product.name|truncatechars:42 }}</a>
+              <span class="product-sku muted">{{ product.sku }}</span>
+            </div>
+
+            <div class="product-row">
+              <span class="product-price">{{ product.price }}</span>
+              {% if product.is_on_sale %}
+                <span class="product-was">{{ product.compare_at_price }}</span>
+                <span class="product-discount">-{{ product.discount_percent }}%</span>
+              {% endif %}
+            </div>
+
+            <div class="product-row">
+              <span class="product-stock">
+                {% if product.is_out_of_stock %}Stock: 0
+                {% elif product.is_low_stock %}Stock: {{ product.stock }} (low)
+                {% else %}Stock: {{ product.stock }}
+                {% endif %}
+              </span>
+              <span class="product-sold">{{ product.units_sold }} sold</span>
+              <span class="product-views">{{ product.views_count }} views</span>
+            </div>
+
+            <div class="product-actions">
+              <a href="{% url 'sellers:product_edit' product.pk %}" class="btn btn-outline btn-sm">Edit</a>
+              <form action="{% url 'sellers:product_toggle' product.pk %}" method="post" style="display:inline;" onsubmit="return confirm('{% if product.is_active %}Hide this product?{% else %}Show this product?{% endif %}');">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                <button type="submit" class="btn btn-outline btn-sm">{% if product.is_active %}Hide{% else %}Show{% endif %}</button>
+              </form>
+              <form action="{% url 'sellers:product_delete' product.pk %}" method="post" style="display:inline;" onsubmit="return confirm('Delete {{ product.name|escapejs }}? This cannot be undone.');">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-outline btn-sm btn-delete">Delete</button>
+              </form>
+            </div>
+          </div>
+        </article>
+      {% endfor %}
+    </div>
+
+    {% include "includes/pagination.html" %}
+  {% else %}
+    <div class="panel empty-state dashboard-empty">
+      <h3 style="margin:0 0 .5rem;">{% if query or status %}No products match{% else %}No products yet{% endif %}</h3>
+      <p style="margin:0 0 1.25rem; color:var(--ink-soft);">
+        {% if query or status %}
+          Try a different filter or clear your current filters.
+        {% else %}
+          Add your first product to start selling.
+        {% endif %}
+      </p>
+      <a href="{% url 'sellers:product_create' %}" class="btn btn-primary">+ Add a product</a>
+      {% if query or status %}
+        <a href="{% url 'sellers:products' %}" class="btn btn-secondary btn-sm" style="margin-left:.5rem;">Clear filters</a>
+      {% endif %}
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

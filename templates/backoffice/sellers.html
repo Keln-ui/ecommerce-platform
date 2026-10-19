@@ -1,0 +1,140 @@
+{% extends "backoffice/base.html" %}
+
+{% block title %}Sellers{% endblock %}
+{% block nav_sellers %}active{% endblock %}
+{% block pip_sellers %}{% if pending_count %}<span class="pip">{{ pending_count }}</span>{% endif %}{% endblock %}
+
+{% block content %}
+<div class="bo-head">
+  <div>
+    <h1>Sellers</h1>
+    <p>{{ page_obj.paginator.count }} storefront{{ page_obj.paginator.count|pluralize }} matched.</p>
+  </div>
+  <div class="bo-head-actions">
+    <a href="{% url 'admin:accounts_sellerprofile_changelist' %}" class="btn btn-ghost">Open in Django admin</a>
+  </div>
+</div>
+
+<div class="filter-chips">
+  <a class="chip {% if not status %}active{% endif %}" href="{% url 'backoffice:sellers' %}">
+    All <b>{{ page_obj.paginator.count|default:0 }}</b>
+  </a>
+  {% for tab in status_tabs %}
+    <a class="chip {% if status == tab.value %}active{% endif %}" href="?status={{ tab.value }}">
+      {{ tab.label }} <b>{{ tab.count }}</b>
+    </a>
+  {% endfor %}
+</div>
+
+<form method="get" class="filter-bar">
+  <input type="search" name="q" value="{{ query }}" placeholder="Search store, email or address..." aria-label="Search sellers">
+  <select name="status" aria-label="Status">
+    <option value="">Any status</option>
+    {% for value, label in status_choices %}
+      <option value="{{ value }}" {% if status == value %}selected{% endif %}>{{ label }}</option>
+    {% endfor %}
+  </select>
+  <select name="sort" aria-label="Sort">
+    <option value="-revenue" {% if sort == "-revenue" %}selected{% endif %}>Highest revenue</option>
+    <option value="revenue" {% if sort == "revenue" %}selected{% endif %}>Lowest revenue</option>
+    <option value="-orders" {% if sort == "-orders" %}selected{% endif %}>Most orders</option>
+    <option value="name" {% if sort == "name" %}selected{% endif %}>Name A-Z</option>
+    <option value="newest" {% if sort == "newest" %}selected{% endif %}>Newest first</option>
+  </select>
+  <button type="submit" class="btn btn-primary">Apply</button>
+  <a href="{% url 'backoffice:sellers' %}" class="btn btn-ghost">Reset</a>
+</form>
+
+<form method="post" action="{% url 'backoffice:sellers_bulk' %}">
+  {% csrf_token %}
+  <input type="hidden" name="next" value="{{ request.get_full_path }}">
+  <div class="card">
+    <div class="card-head">
+      <h2>All sellers</h2>
+      <div style="display:flex;gap:.4rem;align-items:center;">
+        <select name="action" aria-label="Bulk action">
+          <option value="">Bulk action…</option>
+          <option value="approve">Approve</option>
+          <option value="suspend">Suspend</option>
+          <option value="reject">Reject</option>
+          <option value="close">Close storefront</option>
+          <option value="reopen">Reopen storefront</option>
+        </select>
+        <button type="submit" class="btn btn-primary btn-xs">Apply</button>
+      </div>
+    </div>
+
+    {% if sellers %}
+      <div class="table-wrap">
+        <table class="data">
+          <thead>
+            <tr>
+              <th style="width:32px;"><input type="checkbox" data-toggle-all aria-label="Select all"></th>
+              <th>Store</th>
+              <th>Owner</th>
+              <th class="num">Products</th>
+              <th class="num">Orders</th>
+              <th class="num">Revenue</th>
+              <th class="num">Commission</th>
+              <th class="num">Rating</th>
+              <th>Status</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for store in sellers %}
+              <tr>
+                <td><input type="checkbox" name="seller_ids" value="{{ store.pk }}" aria-label="Select {{ store.business_name }}"></td>
+                <td>
+                  <div class="cell-main">
+                    <span class="cell-avatar">{{ store.business_name|slice:":1"|upper }}</span>
+                    <span class="cell-stack">
+                      <a href="{% url 'backoffice:seller_detail' store.pk %}"><strong>{{ store.business_name }}</strong></a>
+                      <small>{{ store.contact_email|default:store.user.email }}</small>
+                    </span>
+                  </div>
+                </td>
+                <td class="small">
+                  {{ store.user.display_name }}<br>
+                  <span class="muted">{{ store.user.email }}</span>
+                </td>
+                <td class="num">{{ store.product_total }}</td>
+                <td class="num">{{ store.order_total }}</td>
+                <td class="num">{{ store.revenue|floatformat:2 }}</td>
+                <td class="num">{{ store.commission|floatformat:2 }}</td>
+                <td class="num">
+                  {% if store.rating_count %}{{ store.rating_average }}{% else %}<span class="muted">—</span>{% endif %}
+                </td>
+                <td>
+                  <span class="pill pill-{{ store.status|lower }}">{{ store.get_status_display }}</span>
+                  {% if not store.is_active %}<br><span class="pill pill-inactive">Closed</span>{% endif %}
+                </td>
+                <td class="actions">
+                  <a href="{% url 'backoffice:seller_detail' store.pk %}" class="btn btn-ghost btn-xs">Manage</a>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% include "backoffice/includes/pagination.html" %}
+    {% else %}
+      <div class="empty">
+        <h3>No sellers found</h3>
+        <p>Try a different search or status filter.</p>
+      </div>
+    {% endif %}
+  </div>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.querySelectorAll("[data-toggle-all]").forEach(function (master) {
+  master.addEventListener("change", function () {
+    var rows = document.querySelectorAll("input[name='seller_ids']");
+    for (var i = 0; i < rows.length; i++) rows[i].checked = master.checked;
+  });
+});
+</script>
+{% endblock %}

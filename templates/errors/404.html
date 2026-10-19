@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+{% block title %}Page not found · {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+<div class="panel empty-state">
+  <h1 style="margin:.5rem 0;">404</h1>
+  <h3>We could not find that page</h3>
+  <p>The link may be broken, or the product may have been removed by its seller.</p>
+  <a href="{% url 'catalog:home' %}" class="btn btn-primary">Back to home</a>
+</div>
+{% endblock %}

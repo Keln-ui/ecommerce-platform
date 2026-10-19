@@ -1,0 +1,105 @@
+{% load static %}<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}{{ SITE_NAME }}{% endblock %}</title>
+<link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="container header-inner">
+    <a href="{% url 'catalog:home' %}" class="brand">
+      <img src="{% static 'images/logo.png' %}" alt="{{ SITE_NAME }} logo" class="brand-mark">
+      <span class="brand-text">{{ SITE_NAME }}</span>
+    </a>
+
+    <form action="{% url 'catalog:product_list' %}" method="get" class="search-form">
+      <input type="search" name="q" value="{{ query|default:'' }}"
+             placeholder="Search products and stores..." aria-label="Search products">
+      <button type="submit">Search</button>
+    </form>
+
+    <nav class="main-nav">
+      <a href="{% url 'catalog:product_list' %}">Shop</a>
+      <a href="{% url 'catalog:faq' %}">FAQ</a>
+      <a href="{% url 'catalog:contact' %}">Contact</a>
+      <a href="{% url 'orders:cart' %}" class="cart-link">
+        Cart{% if cart_count %}<span class="badge">{{ cart_count }}</span>{% endif %}
+      </a>
+
+      {% if user.is_authenticated %}
+        {% if user.can_sell %}
+          <a href="{% url 'sellers:dashboard' %}">Dashboard</a>
+        {% elif user.is_seller %}
+          <a href="{% url 'accounts:seller_status' %}">Store status</a>
+        {% else %}
+          <a href="{% url 'accounts:seller_onboard' %}" class="btn btn-primary btn-sm">Sell with us</a>
+        {% endif %}
+        <div class="user-menu">
+          <span class="user-name">{{ user.display_name }}</span>
+          <a href="{% url 'accounts:profile' %}">Profile</a>
+          <a href="{% url 'accounts:order_history' %}">Orders</a>
+          {% if user.is_staff %}
+            <a href="{% url 'admin:index' %}" style="color:var(--brand);font-weight:600;">⚙️ Admin</a>
+          {% endif %}
+          <form action="{% url 'accounts:logout' %}" method="post" class="inline-form">
+            {% csrf_token %}
+            <button type="submit" class="link-btn">Log out</button>
+          </form>
+        </div>
+      {% else %}
+        <a href="{% url 'accounts:login' %}">Log in</a>
+        <a href="{% url 'accounts:register' %}" class="btn btn-primary btn-sm">Sign up</a>
+      {% endif %}
+    </nav>
+  </div>
+</header>
+
+{% if messages %}
+  <div class="container">
+    <ul class="messages">
+      {% for message in messages %}
+        <li class="alert alert-{{ message.tags|default:'info' }}">{{ message }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+{% endif %}
+
+<main class="container main-content">
+  {% block content %}{% endblock %}
+</main>
+
+<footer class="site-footer">
+  <div class="container footer-inner">
+    <div>
+      <h4>{{ SITE_NAME }}</h4>
+      <p>A multi-vendor marketplace where independent sellers run their own storefronts.</p>
+    </div>
+    <div>
+      <h5>Shop</h5>
+      <a href="{% url 'catalog:product_list' %}">All products</a>
+      <a href="{% url 'catalog:product_list' %}?sort=popular">Best sellers</a>
+      <a href="{% url 'catalog:product_list' %}?on_sale=1">On sale</a>
+      <a href="{% url 'catalog:contact' %}">Contact Us</a>
+      <a href="{% url 'catalog:faq' %}">FAQ</a>
+    </div>
+    <div>
+      <h5>Sell</h5>
+      <a href="{% url 'accounts:seller_onboard' %}">Open a store</a>
+      <a href="{% url 'accounts:register' %}">Create an account</a>
+    </div>
+    <div>
+      <h5>Account</h5>
+      <a href="{% url 'accounts:profile' %}">Profile</a>
+      <a href="{% url 'orders:order_list' %}">Your orders</a>
+    </div>
+  </div>
+  <div class="container footer-bottom">
+    <small>&copy; {% now "Y" %} {{ SITE_NAME }}. Built By Coresync Digital Solutions.</small>
+  </div>
+</footer>
+
+</body>
+</html>

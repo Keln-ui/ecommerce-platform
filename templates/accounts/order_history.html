@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block title %}My orders · {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+<div style="max-width:900px;margin:0 auto;">
+  <div class="page-head">
+    <div>
+      <h1>My orders</h1>
+      <p>Every purchase you have made, split by seller.</p>
+    </div>
+  </div>
+
+  <!-- Enhanced Stats -->
+  <div class="stat-grid" style="margin-bottom:1.5rem;">
+    <div class="stat-card">
+      <div class="label">Orders placed</div>
+      <div class="value">{{ order_count }}</div>
+      <div class="sub">across all sellers</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">Total spent</div>
+      <div class="value">{{ total_spent }}</div>
+      <div class="sub">on marketplace purchases</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">Avg order value</div>
+      <div class="value">
+        {% if order_count > 0 %}{{ total_spent|floatformat:2 }}{% else %}0.00{% endif %}
+      </div>
+      <div class="sub">per transaction</div>
+    </div>
+  </div>
+
+  <div class="two-col">
+    <!-- Orders List -->
+    <div class="panel">
+      <div class="section-head">
+        <h2 style="margin:0;">All orders</h2>
+        <span class="muted">{{ orders|length }} order{{ orders|length|pluralize }}</span>
+      </div>
+      {% if orders %}
+        {% for order in orders %}{% include "includes/order_row.html" %}{% endfor %}
+      {% else %}
+        <div class="empty-state">
+          <h3>No orders yet</h3>
+          <p>When you buy something it will show up here.</p>
+          <a href="{% url 'catalog:product_list' %}" class="btn btn-primary">Start shopping</a>
+        </div>
+      {% endif %}
+    </div>
+
+    <!-- Spending by Seller -->
+    {% if spending_by_seller %}
+    <aside class="stack">
+      <div class="panel">
+        <h3>Spending by seller</h3>
+        <table class="spec-table">
+          {% for seller in spending_by_seller %}
+            <tr>
+              <td>{{ seller.seller__business_name|truncatechars:22 }}</td>
+              <td style="text-align:right;"><strong>{{ seller.order_count }}</strong></td>
+              <td style="text-align:right;">{{ seller.total_spent|floatformat:2 }}</td>
+            </tr>
+          {% endfor %}
+        </table>
+      </div>
+
+      <div class="panel panel-sm">
+        <h3>Quick actions</h3>
+        <a href="{% url 'catalog:product_list' %}" class="btn btn-secondary btn-sm" style="width:100%;margin-bottom:.5rem;">Browse products</a>
+        <a href="{% url 'orders:cart' %}" class="btn btn-secondary btn-sm" style="width:100%;margin-bottom:.5rem;">View cart</a>
+        <a href="{% url 'accounts:profile' %}" class="btn btn-secondary btn-sm" style="width:100%;">My profile</a>
+      </div>
+    </aside>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+
+{% block title %}Seller orders · {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Orders to fulfil</h1>
+    <p>{{ page_obj.paginator.count }} order{{ page_obj.paginator.count|pluralize }} for {{ store.business_name }}</p>
+  </div>
+  <a href="{% url 'sellers:dashboard' %}" class="btn btn-secondary btn-sm">Back to dashboard</a>
+</div>
+
+<form method="get" class="panel filter-bar">
+  <label for="status" class="muted">Filter by status</label>
+  <select name="status" id="status">
+    <option value="">All statuses</option>
+    {% for value, label in status_choices %}
+      <option value="{{ value }}" {% if status == value %}selected{% endif %}>{{ label }}</option>
+    {% endfor %}
+  </select>
+  <button type="submit" class="btn btn-secondary btn-sm">Apply</button>
+  <a href="{% url 'sellers:orders' %}" class="btn btn-secondary btn-sm">Reset</a>
+</form>
+
+<div class="panel">
+  {% if orders %}
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Order</th>
+            <th>Buyer</th>
+            <th class="num">Items</th>
+            <th class="num">Total</th>
+            <th class="num">Your payout</th>
+            <th>Status</th>
+            <th>Placed</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for order in orders %}
+            <tr>
+              <td><a href="{% url 'orders:order_detail' order.order_number %}"><strong>{{ order.order_number }}</strong></a></td>
+              <td>{{ order.buyer.display_name }}</td>
+              <td class="num">{{ order.item_count }}</td>
+              <td class="num">{{ order.total }}</td>
+              <td class="num">{{ order.seller_payout }}</td>
+              <td><span class="status status-{{ order.status|lower }}">{{ order.get_status_display }}</span></td>
+              <td>{{ order.placed_at|date:"d M Y" }}</td>
+              <td>
+                <a href="{% url 'orders:order_detail' order.order_number %}" class="btn btn-secondary btn-sm">Manage</a>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% include "includes/pagination.html" %}
+  {% else %}
+    <div class="empty-state">
+      <h3>No orders here</h3>
+      <p>{% if status %}No orders with that status.{% else %}Orders from shoppers will appear here.{% endif %}</p>
+      <a href="{% url 'sellers:orders' %}" class="btn btn-primary">View all orders</a>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

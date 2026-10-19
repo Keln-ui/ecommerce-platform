@@ -1,0 +1,90 @@
+{% extends "admin/base_site.html" %}
+{% load ops_tags %}
+
+{% block bodyclass %}{{ block.super }} dashboard{% endblock %}
+
+{% block breadcrumbs %}{% endblock %}
+
+{% block content %}
+{% ops 30 as o %}
+
+<div class="mv-panel">
+  <h2>Marketplace health &middot; last {{ o.days }} days
+    <a href="{% url 'backoffice:overview' %}">Full dashboard &rarr;</a>
+  </h2>
+  <div class="mv-stats">
+    <div class="mv-stat"><span>Gross revenue</span><strong>{{ o.revenue|floatformat:2 }}</strong></div>
+    <div class="mv-stat"><span>Commission</span><strong>{{ o.commission|floatformat:2 }}</strong></div>
+    <div class="mv-stat"><span>Seller payouts</span><strong>{{ o.payout|floatformat:2 }}</strong></div>
+    <div class="mv-stat"><span>Orders</span><strong>{{ o.orders }}</strong></div>
+    <div class="mv-stat"><span>Approved sellers</span><strong>{{ o.sellers }}</strong></div>
+    <div class="mv-stat"><span>Live products</span><strong>{{ o.products }}</strong></div>
+  </div>
+</div>
+
+<div class="mv-panel">
+  <h2>Needs attention
+    {% if o.attention_total %}<span class="mv-pill pending">{{ o.attention_total }} item{{ o.attention_total|pluralize }}</span>
+    {% else %}<span class="mv-pill paid">All clear</span>{% endif %}
+  </h2>
+  <div class="mv-attention">
+    <a href="{% url 'backoffice:sellers' %}?status=PENDING">Seller applications <b>{{ o.attention.pending_sellers }}</b></a>
+    <a href="{% url 'backoffice:orders' %}?status=PAID">Awaiting fulfilment <b>{{ o.attention.awaiting_fulfilment }}</b></a>
+    <a href="{% url 'backoffice:orders' %}?unpaid=1">Unpaid orders <b>{{ o.attention.unpaid_orders }}</b></a>
+    <a href="{% url 'backoffice:products' %}?state=out_of_stock">Out of stock <b>{{ o.attention.out_of_stock }}</b></a>
+    <a href="{% url 'backoffice:products' %}?state=low_stock">Low stock <b>{{ o.attention.low_stock }}</b></a>
+    <a href="{% url 'backoffice:reviews' %}?state=pending">Hidden reviews <b>{{ o.attention.hidden_reviews }}</b></a>
+  </div>
+</div>
+
+<div class="mv-grid">
+  <div class="mv-panel">
+    <h2>Sellers awaiting approval
+      <a href="{% url 'backoffice:sellers' %}?status=PENDING">Review all</a>
+    </h2>
+    {% if o.pending_sellers_list %}
+      <table class="mv-table">
+        <thead><tr><th>Store</th><th>Contact</th><th>Applied</th><th></th></tr></thead>
+        <tbody>
+          {% for store in o.pending_sellers_list %}
+            <tr>
+              <td><a href="{% url 'backoffice:seller_detail' store.pk %}"><strong>{{ store.business_name }}</strong></a></td>
+              <td>{{ store.contact_email|default:store.user.email|truncatechars:24 }}</td>
+              <td>{{ store.created_at|date:"d M Y" }}</td>
+              <td>
+                <form method="post" action="{% url 'backoffice:seller_status' store.pk %}" style="display:inline">
+                  {% csrf_token %}
+                  <input type="hidden" name="status" value="APPROVED">
+                  <input type="hidden" name="next" value="{% url 'admin:index' %}">
+                  <button class="button" style="padding:2px 10px;font-size:11px;">Approve</button>
+                </form>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <p style="color:#6b7382;font-size:12px;margin:0;">No seller applications are waiting.</p>
+    {% endif %}
+  </div>
+
+  <div class="mv-panel">
+    <h2>Latest orders <a href="{% url 'backoffice:orders' %}">All orders</a></h2>
+    <table class="mv-table">
+      <thead><tr><th>Order</th><th>Store</th><th>Status</th><th style="text-align:right;">Total</th></tr></thead>
+      <tbody>
+        {% for order in o.recent_orders %}
+          <tr>
+            <td><a href="{% url 'admin:orders_order_change' order.pk %}">{{ order.order_number }}</a></td>
+            <td>{{ order.seller.business_name|truncatechars:20 }}</td>
+            <td><span class="mv-pill {{ order.status|lower }}">{{ order.get_status_display }}</span></td>
+            <td style="text-align:right;">{{ order.total|floatformat:2 }}</td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="4" style="color:#6b7382;">No orders yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

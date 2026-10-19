@@ -1,0 +1,74 @@
+{% extends "admin/base_site.html" %}
+
+{% block title %}{{ title }} | {{ site_title|default:"Marketplace Admin" }}{% endblock %}
+
+{% block branding %}
+<div id="site-name">
+  <a href="{% url 'admin:index' %}">{{ site_header }}</a>
+</div>
+<div style="font-size:.72rem;color:#c0c6d2;margin-top:.15rem;">
+  Staffing the marketplace
+</div>
+{% endblock %}
+
+{% block userlinks %}
+{{ block.super }}
+<a href="{% url 'backoffice:overview' %}" style="background: var(--mv-brand, #2f5bea); color: #fff; padding: 6px 14px; border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 12px; margin-left: 8px;">📊 Back Office</a>
+{% endblock %}
+
+{% block extrastyle %}{{ block.super }}
+<style>
+  :root { --mv-brand: #2f5bea; --mv-bg: #f3f4f8; --mv-card: #ffffff; --mv-text: #1f2430; --mv-muted: #6b7382; --mv-border: #e4e7ed; }
+
+  html, body { background: var(--mv-bg); }
+  #header { background: #16181d; border-bottom: 1px solid #242830; }
+  #branding h1, #branding h1 a { color: #fff; font-size: 17px; font-weight: 700; letter-spacing: .02em; }
+  #user-tools, #user-tools a { color: #c0c6d2; }
+  #user-tools a:hover { color: #fff; }
+
+  .module h2, .module caption, .inline-group h2 {
+    background: #f6f7f9; color: #1f2430; font-size: 13px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .05em; padding: 8px 12px; border-bottom: 1px solid var(--mv-border);
+  }
+
+  .form-row.field-email input, .form-row.field-password1 input, .form-row.field-password2 input {
+    background: #fff; border: 1px solid var(--mv-border); color: #1f2430;
+  }
+  .form-row input, .form-row select, .form-row textarea {
+    background: #fff; border: 1px solid var(--mv-border); color: #1f2430;
+  }
+  .form-row input:focus, .form-row select:focus, .form-row textarea:focus {
+    border-color: var(--mv-brand); outline: 2px solid var(--mv-brand)40;
+  }
+
+  .button, input[type=submit], input[type=button], .submit-row input.default {
+    background: var(--mv-brand); color: #fff; border: none; border-radius: 6px;
+    padding: 6px 16px; font-size: 13px; font-weight: 600;
+  }
+  .button.default, input[type=submit].default, .submit-row input.default {
+    background: #16181d;
+  }
+  .button:hover, input[type=submit]:hover { filter: brightness(1.1); }
+
+  .deletelink, .deletelink:visited { color: #c62828; }
+
+  .paginator { margin: 16px 0; font-size: 12px; color: var(--mv-muted); }
+
+  .mv-badge {
+    display: inline-block; padding: 2px 8px; border-radius: 999px;
+    font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .03em;
+  }
+  .mv-badge--buyer { background: #e8f6ee; color: #0d6b3e; }
+  .mv-badge--seller { background: #f0e9ff; color: #5b21b6; }
+  .mv-badge--staff { background: #fff5e5; color: #c77700; }
+  .mv-badge--pending { background: #fff5e5; color: #c77700; }
+  .mv-badge--approved { background: #e8f6ee; color: #0d6b3e; }
+  .mv-badge--rejected { background: #fdecec; color: #c62828; }
+  .mv-badge--suspended { background: #eceef2; color: #6b7382; }
+
+  .field-readonly { color: var(--mv-muted); font-size: 12.5px; }
+
+  #content h1 { font-size: 20px; font-weight: 800; letter-spacing: -.01em; color: #1f2430; margin-bottom: 8px; }
+  #content .descriptive { color: var(--mv-muted); font-size: 13px; margin-bottom: 20px; }
+</style>
+{% endblock %}

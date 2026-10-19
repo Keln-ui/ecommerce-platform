@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+
+{% block title %}Your cart · {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Your cart</h1>
+    <p>{{ item_count }} item{{ item_count|pluralize }} from {{ seller_count }} store{{ seller_count|pluralize }}</p>
+  </div>
+  <a href="{% url 'catalog:product_list' %}" class="btn btn-secondary btn-sm">Continue shopping</a>
+</div>
+
+{% if cart.is_empty %}
+  <div class="panel empty-state">
+    <h3>Your cart is empty</h3>
+    <p>Browse the marketplace and add something you like.</p>
+    <a href="{% url 'catalog:product_list' %}" class="btn btn-primary">Browse products</a>
+  </div>
+{% else %}
+  <div class="two-col-wide">
+    <div>
+      {% for group in groups.values %}
+        <div class="panel seller-group">
+          <div class="seller-group-head">
+            <span class="store-avatar" style="width:26px;height:26px;font-size:.75rem;">
+              {% if group.seller.logo %}
+                <img src="{{ group.seller.logo.url }}" alt="">
+              {% else %}{{ group.seller.business_name|slice:":1"|upper }}{% endif %}
+            </span>
+            <span>Sold by <a href="{{ group.seller.get_absolute_url }}"><strong>{{ group.seller.business_name }}</strong></a></span>
+          </div>
+
+          {% for item in group.items %}
+            <div class="cart-line">
+              <a href="{{ item.product.get_absolute_url }}">
+                {% if item.product.primary_image %}
+                  <img src="{{ item.product.primary_image.image.url }}" alt="{{ item.product.name }}" class="cart-thumb">
+                {% else %}
+                  <div class="cart-thumb-placeholder">{{ item.product.name|slice:":1"|upper }}</div>
+                {% endif %}
+              </a>
+
+              <div class="cart-line-info">
+                <h4><a href="{{ item.product.get_absolute_url }}">{{ item.product.name }}</a></h4>
+                <p class="muted" style="margin:.15rem 0;font-size:.85rem;">
+                  SKU {{ item.product.sku }} · {{ item.product.price }} each
+                </p>
+                {% if item.exceeds_stock %}
+                  <p class="alert alert-warning" style="padding:.3rem .5rem;font-size:.8rem;margin:.3rem 0 0;">
+                    Only {{ item.product.stock }} in stock — the quantity will be capped at checkout.
+                  </p>
+                {% endif %}
+                <form action="{% url 'orders:cart_remove' item.pk %}" method="post" style="display:inline;">
+                  {% csrf_token %}
+                  <button type="submit" class="link-btn">Remove</button>
+                </form>
+              </div>
+
+              <div class="cart-line-actions">
+                <form action="{% url 'orders:cart_update' %}" method="post" class="qty-stepper">
+                  {% csrf_token %}
+                  <input type="hidden" name="item_id" value="{{ item.pk }}">
+                  <button type="submit" name="quantity" value="{{ item.quantity|add:'-1' }}" aria-label="Decrease quantity">&minus;</button>
+                  <input type="number" name="quantity" value="{{ item.quantity }}" min="0" max="{{ item.product.stock }}" aria-label="Quantity">
+                  <button type="submit" name="quantity" value="{{ item.quantity|add:'1' }}" aria-label="Increase quantity">+</button>
+                </form>
+                <span class="line-total">{{ item.line_total }}</span>
+              </div>
+            </div>
+          {% endfor %}
+
+          <div class="group-summary">
+            <span class="muted">Subtotal {{ group.subtotal }}</span>
+            <span class="muted">+ shipping {{ group.shipping }}</span>
+            <strong>{{ group.total }}</strong>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+
+    <aside>
+      <div class="panel">
+        <h3>Order summary</h3>
+        <div class="totals">
+          <div class="totals-row">
+            <span>Items ({{ item_count }})</span>
+            <span>{{ subtotal }}</span>
+          </div>
+          <div class="totals-row">
+            <span>Shipping ({{ seller_count }} store{{ seller_count|pluralize }})</span>
+            <span>{{ shipping_fee }}</span>
+          </div>
+          <div class="totals-row grand">
+            <span>Total</span>
+            <span>{{ total }}</span>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+        <p class="muted" style="font-size:.82rem;">
+          Your cart holds items from {{ seller_count }} separate store{{ seller_count|pluralize }}.
+          Each seller prepares and ships their own part, so this checkout creates
+          {{ seller_count }} order{{ seller_count|pluralize }}.
+        </p>
+
+        <a href="{% url 'orders:checkout' %}" class="btn btn-primary btn-lg" style="width:100%;">Proceed to checkout</a>
+      </div>
+    </aside>
+  </div>
+{% endif %}
+{% endblock %}

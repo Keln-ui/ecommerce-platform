@@ -1,0 +1,181 @@
+{% extends "base.html" %}
+
+{% block title %}{{ product.name }} · {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+<div class="breadcrumbs">
+  <a href="{% url 'catalog:home' %}">Home</a><span class="sep">/</span>
+  <a href="{% url 'catalog:product_list' %}">Shop</a><span class="sep">/</span>
+  <a href="{{ product.category.get_absolute_url }}">{{ product.category.name }}</a><span class="sep">/</span>
+  <span>{{ product.name|truncatechars:40 }}</span>
+</div>
+
+<div class="panel" style="margin-bottom:1.5rem;">
+  <div class="detail-grid">
+    <div>
+      <div class="gallery-main">
+        {% with img=product.primary_image %}
+          {% if img %}
+            <img id="main-image" src="{{ img.image.url }}" alt="{{ img.alt_text|default:product.name }}">
+          {% else %}
+            <div class="placeholder-img" style="font-size:4rem;">{{ product.name|slice:":1"|upper }}</div>
+          {% endif %}
+        {% endwith %}
+      </div>
+
+      {% if product.images.count > 1 %}
+        <div class="gallery-thumbs">
+          {% for img in product.images.all %}
+            <img src="{{ img.image.url }}" alt="{{ img.alt_text }}"
+                 class="{% if img == product.primary_image %}active{% endif %}"
+                 onclick="document.getElementById('main-image').src=this.src;">
+          {% endfor %}
+        </div>
+      {% endif %}
+    </div>
+
+    <div>
+      <span class="tag">{{ product.category.name }}</span>
+      {% if product.is_featured %}<span class="tag">Featured</span>{% endif %}
+      {% if product.free_shipping %}<span class="tag">Free shipping</span>{% endif %}
+
+      <h1 class="detail-title">{{ product.name }}</h1>
+
+      <div class="rating-row">
+        {% if product.rating_count %}
+          <span class="stars">{% for i in "12345" %}{% if forloop.counter <= product.rating_average %}&#9733;{% else %}&#9734;{% endif %}{% endfor %}</span>
+          <span>{{ product.rating_average }} · {{ product.rating_count }} review{{ product.rating_count|pluralize }}</span>
+        {% else %}
+          <span class="muted">No reviews yet</span>
+        {% endif %}
+        <span class="muted">· {{ product.units_sold }} sold</span>
+      </div>
+
+      <div class="detail-price">{{ product.price }}</div>
+      {% if product.is_on_sale %}
+        <div>
+          <span class="price-was">{{ product.compare_at_price }}</span>
+          <span class="flag flag-sale" style="margin-left:.4rem;">Save {{ product.discount_percent }}%</span>
+        </div>
+      {% endif %}
+
+      {% if product.short_description %}
+        <p class="detail-desc">{{ product.short_description }}</p>
+      {% endif %}
+
+      <div class="store-card">
+        <div class="store-avatar">
+          {% if product.seller.logo %}
+            <img src="{{ product.seller.logo.url }}" alt="">
+          {% else %}{{ product.seller.business_name|slice:":1"|upper }}{% endif %}
+        </div>
+        <div>
+          <small class="muted">Sold and shipped by</small>
+          <div><a href="{{ product.seller.get_absolute_url }}"><strong>{{ product.seller.business_name }}</strong></a></div>
+          {% if product.seller.rating_count %}
+            <small class="muted">&#9733; {{ product.seller.rating_average }} ({{ product.seller.rating_count }})</small>
+          {% endif %}
+        </div>
+      </div>
+
+      {% if product.is_out_of_stock %}
+        <div class="alert alert-warning">This product is currently out of stock.</div>
+      {% elif user.is_authenticated %}
+        {% if product.is_low_stock %}
+          <div class="alert alert-warning">Hurry — only {{ product.stock }} left in stock.</div>
+        {% endif %}
+        <form action="{% url 'orders:cart_add' %}" method="post">
+          {% csrf_token %}
+          <input type="hidden" name="product_id" value="{{ product.pk }}">
+          <input type="hidden" name="next" value="{{ product.get_absolute_url }}">
+          <div style="display:flex;gap:.75rem;align-items:center;flex-wrap:wrap;">
+            <div class="qty-control">
+              <label for="quantity" class="muted">Qty</label>
+              <input type="number" id="quantity" name="quantity" value="1" min="1" max="{{ product.stock }}">
+            </div>
+            <button type="submit" class="btn btn-primary btn-lg">Add to cart</button>
+            <a href="{% url 'orders:cart' %}" class="btn btn-secondary btn-lg">Go to cart</a>
+          </div>
+        </form>
+      {% else %}
+        <a href="{% url 'accounts:login' %}?next={{ request.path|urlencode }}" class="btn btn-primary btn-lg">Log in to buy</a>
+      {% endif %}
+
+      <div class="divider"></div>
+
+      <table class="spec-table">
+        <tr><th>SKU</th><td>{{ product.sku }}</td></tr>
+        <tr><th>Category</th><td>{{ product.category.name }}</td></tr>
+        <tr><th>Availability</th>
+          <td>{% if product.is_out_of_stock %}Out of stock{% else %}In stock ({{ product.stock }}){% endif %}</td>
+        </tr>
+        <tr><th>Seller</th><td><a href="{{ product.seller.get_absolute_url }}">{{ product.seller.business_name }}</a></td></tr>
+      </table>
+    </div>
+  </div>
+
+  {% if product.description %}
+    <div class="divider"></div>
+    <h2>Product description</h2>
+    <p style="white-space:pre-line;">{{ product.description }}</p>
+  {% endif %}
+</div>
+
+<div class="panel" style="margin-bottom:1.5rem;">
+  <h2>Customer reviews ({{ product.reviews.count }})</h2>
+
+  {% if product.reviews.all %}
+    {% for review in product.reviews.all %}
+      <div class="review">
+        <strong>{{ review.user.display_name }}</strong>
+        <span class="stars">{% for i in "12345" %}{% if forloop.counter <= review.rating %}&#9733;{% else %}&#9734;{% endif %}{% endfor %}</span>
+        <small class="muted">· {{ review.created_at|date:"d M Y" }}</small>
+        {% if review.title %}<div style="font-weight:600;margin-top:.3rem;">{{ review.title }}</div>{% endif %}
+        {% if review.comment %}<p class="muted" style="margin:.3rem 0 0;">{{ review.comment }}</p>{% endif %}
+      </div>
+    {% endfor %}
+  {% else %}
+    <p class="muted">No reviews yet. Be the first to share your experience.</p>
+  {% endif %}
+
+  <div class="divider"></div>
+
+  {% if user_review %}
+    <p class="muted">You already reviewed this product. Thanks!</p>
+  {% elif user.is_authenticated %}
+    <h3>Write a review</h3>
+    <form action="{% url 'catalog:add_review' product.slug %}" method="post">
+      {% csrf_token %}
+      <div class="form-field">
+        <label for="rating">Your rating</label>
+        <select name="rating" id="rating" required>
+          <option value="">Choose a rating</option>
+          {% for r in "54321" %}<option value="{{ r }}">{{ r }} star{{ r|pluralize }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="form-field">
+        <label for="title">Headline</label>
+        <input type="text" name="title" id="title" maxlength="150" placeholder="Sum it up in a few words">
+      </div>
+      <div class="form-field">
+        <label for="comment">Your review</label>
+        <textarea name="comment" id="comment" rows="4" placeholder="How was the product and the seller?"></textarea>
+      </div>
+      <button type="submit" class="btn btn-primary">Post review</button>
+    </form>
+  {% else %}
+    <p class="muted">
+      <a href="{% url 'accounts:login' %}?next={{ request.path|urlencode }}">Log in</a> to leave a review.
+    </p>
+  {% endif %}
+</div>
+
+{% if related %}
+  <section class="section">
+    <div class="section-head"><h2>More from this category</h2></div>
+    <div class="product-grid">
+      {% for product in related %}{% include "includes/product_card.html" %}{% endfor %}
+    </div>
+  </section>
+{% endif %}
+{% endblock %}

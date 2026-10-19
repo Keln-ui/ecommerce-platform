@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }} · {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>{{ title }}</h1>
+    <p>{% if product %}Update the details shoppers see for this item.{% else %}Add a new item to your catalog.{% endif %}</p>
+  </div>
+  <a href="{% url 'sellers:products' %}" class="btn btn-secondary btn-sm">Back to products</a>
+</div>
+
+<form method="post" enctype="multipart/form-data">
+  {% csrf_token %}
+  <div class="two-col-wide">
+    <div class="stack">
+      <div class="panel">
+        <h3>Basic information</h3>
+        {{ form.non_field_errors }}
+
+        <div class="form-field">
+          <label for="{{ form.name.id_for_label }}">Product name *</label>
+          {{ form.name }}
+          {{ form.name.errors }}
+        </div>
+
+        <div class="form-field">
+          <label for="{{ form.category.id_for_label }}">Category *</label>
+          {{ form.category }}
+          {{ form.category.errors }}
+        </div>
+
+        <div class="form-field">
+          <label for="{{ form.sku.id_for_label }}">SKU *</label>
+          {{ form.sku }}
+          <span class="helptext">Your internal stock code. Must be unique across the marketplace.</span>
+          {{ form.sku.errors }}
+        </div>
+
+        <div class="form-field">
+          <label for="{{ form.short_description.id_for_label }}">Short description</label>
+          {{ form.short_description }}
+          <span class="helptext">One line shown on the product tile.</span>
+          {{ form.short_description.errors }}
+        </div>
+
+        <div class="form-field">
+          <label for="{{ form.description.id_for_label }}">Full description</label>
+          {{ form.description }}
+          {{ form.description.errors }}
+        </div>
+      </div>
+
+      <div class="panel">
+        <h3>Product images</h3>
+        {% if images %}
+          <div style="display:flex;gap:.6rem;flex-wrap:wrap;margin-bottom:1rem;">
+            {% for image in images %}
+              <div style="text-align:center;">
+                <img src="{{ image.image.url }}" alt=""
+                     style="width:84px;height:84px;object-fit:cover;border-radius:8px;border:2px solid {% if image.is_primary %}var(--brand){% else %}var(--line){% endif %};">
+                <form action="{% url 'sellers:product_image_delete' image.pk %}" method="post"
+                      onsubmit="return confirm('Remove this image?');">
+                  {% csrf_token %}
+                  <button type="submit" class="link-btn" style="font-size:.78rem;">Remove</button>
+                </form>
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+
+        <div class="form-field">
+          <label for="{{ image_form.image.id_for_label }}">Upload an image</label>
+          {{ image_form.image }}
+          <span class="helptext">JPG or PNG, up to 5 MB. The first image becomes the thumbnail.</span>
+          {{ image_form.image.errors }}
+        </div>
+        <div class="form-row">
+          <div class="form-field">
+            <label for="{{ image_form.alt_text.id_for_label }}">Alt text</label>
+            {{ image_form.alt_text }}
+            {{ image_form.alt_text.errors }}
+          </div>
+          <div class="form-field">
+            <label for="{{ image_form.display_order.id_for_label }}">Sort order</label>
+            {{ image_form.display_order }}
+            {{ image_form.display_order.errors }}
+          </div>
+        </div>
+        <div class="checkbox-field">
+          {{ image_form.is_primary }}
+          <label for="{{ image_form.is_primary.id_for_label }}">Use as the main image</label>
+        </div>
+      </div>
+    </div>
+
+    <aside class="stack">
+      <div class="panel">
+        <h3>Pricing</h3>
+        <div class="form-field">
+          <label for="{{ form.price.id_for_label }}">Price *</label>
+          {{ form.price }}
+          {{ form.price.errors }}
+        </div>
+        <div class="form-field">
+          <label for="{{ form.compare_at_price.id_for_label }}">Compare-at price</label>
+          {{ form.compare_at_price }}
+          <span class="helptext">Shown as the original price to highlight a discount.</span>
+          {{ form.compare_at_price.errors }}
+        </div>
+        <div class="checkbox-field">
+          {{ form.free_shipping }}
+          <label for="{{ form.free_shipping.id_for_label }}">Free shipping on this item</label>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h3>Inventory</h3>
+        <div class="form-field">
+          <label for="{{ form.stock.id_for_label }}">Stock on hand *</label>
+          {{ form.stock }}
+          {{ form.stock.errors }}
+        </div>
+        <div class="form-field">
+          <label for="{{ form.low_stock_threshold.id_for_label }}">Low stock alert</label>
+          {{ form.low_stock_threshold }}
+          <span class="helptext">Warn shoppers when stock drops to this number.</span>
+          {{ form.low_stock_threshold.errors }}
+        </div>
+      </div>
+
+      <div class="panel">
+        <h3>Visibility</h3>
+        <div class="checkbox-field" style="margin-bottom:.6rem;">
+          {{ form.is_active }}
+          <label for="{{ form.is_active.id_for_label }}">Live in the storefront</label>
+        </div>
+        <div class="checkbox-field">
+          {{ form.is_featured }}
+          <label for="{{ form.is_featured.id_for_label }}">Feature on the homepage</label>
+        </div>
+        <div class="divider"></div>
+        <button type="submit" class="btn btn-primary" style="width:100%;">
+          {% if product %}Save changes{% else %}Publish product{% endif %}
+        </button>
+      </div>
+    </aside>
+  </div>
+</form>
+{% endblock %}

@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+
+{% block title %}{% if category %}{{ category.name }} · {% elif query %}Search: {{ query }} · {% endif %}{{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+<div class="breadcrumbs">
+  <a href="{% url 'catalog:home' %}">Home</a><span class="sep">/</span>
+  <a href="{% url 'catalog:product_list' %}">Shop</a>
+  {% if category %}<span class="sep">/</span><span>{{ category.name }}</span>{% endif %}
+</div>
+
+<div class="page-head">
+  <div>
+    <h1>{% if category %}{{ category.name }}{% elif query %}Results for "{{ query }}"{% else %}All products{% endif %}</h1>
+    <p>{{ page_obj.paginator.count }} product{{ page_obj.paginator.count|pluralize }} available</p>
+  </div>
+</div>
+
+<div class="two-col">
+  <aside>
+    <form method="get" class="panel">
+      {% if query %}<input type="hidden" name="q" value="{{ query }}">{% endif %}
+      {% if seller_slug %}<input type="hidden" name="seller" value="{{ seller_slug }}">{% endif %}
+
+      <h3>Price range</h3>
+      <div class="form-row" style="margin-bottom:.75rem;">
+        <div>
+          <label for="min_price">Min</label>
+          <input type="number" step="0.01" id="min_price" name="min_price"
+                 value="{{ request.GET.min_price|default:'' }}" placeholder="0">
+        </div>
+        <div>
+          <label for="max_price">Max</label>
+          <input type="number" step="0.01" id="max_price" name="max_price"
+                 value="{{ request.GET.max_price|default:'' }}" placeholder="Any">
+        </div>
+      </div>
+
+      <h3>Minimum rating</h3>
+      <div class="form-field">
+        <select name="rating" id="rating">
+          <option value="">Any rating</option>
+          {% for r in "45" %}
+            <option value="{{ r }}" {% if request.GET.rating == r %}selected{% endif %}>{{ r }}+ stars</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="checkbox-field" style="margin-bottom:.4rem;">
+        <input type="checkbox" id="in_stock" name="in_stock" value="1" {% if request.GET.in_stock %}checked{% endif %}>
+        <label for="in_stock">In stock only</label>
+      </div>
+      <div class="checkbox-field" style="margin-bottom:1rem;">
+        <input type="checkbox" id="on_sale" name="on_sale" value="1" {% if request.GET.on_sale %}checked{% endif %}>
+        <label for="on_sale">On sale</label>
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-sm">Apply filters</button>
+      <a href="{% url 'catalog:product_list' %}" class="btn btn-secondary btn-sm">Reset</a>
+    </form>
+
+    <div class="panel panel-sm" style="margin-top:1rem;">
+      <h3>Categories</h3>
+      <ul class="filter-list" style="margin-bottom:0;">
+        <li>
+          <a href="{% url 'catalog:product_list' %}" class="{% if not category %}active{% endif %}">
+            All <span class="count">{{ page_obj.paginator.count }}</span>
+          </a>
+        </li>
+        {% for cat in categories %}
+          <li>
+            <a href="{{ cat.get_absolute_url }}" class="{% if category.pk == cat.pk %}active{% endif %}">
+              {{ cat.name }} <span class="count">{{ cat.product_total }}</span>
+            </a>
+          </li>
+        {% endfor %}
+      </ul>
+    </div>
+
+    {% if sellers %}
+    <div class="panel panel-sm" style="margin-top:1rem;">
+      <h3>Stores</h3>
+      <ul class="filter-list" style="margin-bottom:0;">
+        {% for seller in sellers|slice:":8" %}
+          <li><a href="{% url 'catalog:seller_detail' seller.slug %}">{{ seller.business_name }}</a></li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+  </aside>
+
+  <section>
+    <div class="result-bar">
+      <span class="muted">{% if price_bounds.0 %}Prices {{ price_bounds.0 }} – {{ price_bounds.1 }}{% endif %}</span>
+      <form method="get" style="display:flex;gap:.5rem;align-items:center;">
+        {% for key, value in request.GET.items %}
+          {% if key != "sort" %}<input type="hidden" name="{{ key }}" value="{{ value }}">{% endif %}
+        {% endfor %}
+        <label for="sort" class="muted">Sort by</label>
+        <select name="sort" id="sort" onchange="this.form.submit()">
+          <option value="newest" {% if sort == "newest" %}selected{% endif %}>Newest</option>
+          <option value="popular" {% if sort == "popular" %}selected{% endif %}>Best selling</option>
+          <option value="price_asc" {% if sort == "price_asc" %}selected{% endif %}>Price: low to high</option>
+          <option value="price_desc" {% if sort == "price_desc" %}selected{% endif %}>Price: high to low</option>
+          <option value="rating" {% if sort == "rating" %}selected{% endif %}>Top rated</option>
+          <option value="name" {% if sort == "name" %}selected{% endif %}>Name A-Z</option>
+        </select>
+        <noscript><button type="submit" class="btn btn-sm">Go</button></noscript>
+      </form>
+    </div>
+
+    {% if products %}
+      <div class="product-grid">
+        {% for product in products %}{% include "includes/product_card.html" %}{% endfor %}
+      </div>
+      {% include "includes/pagination.html" %}
+    {% else %}
+      <div class="panel empty-state">
+        <h3>No products match your filters</h3>
+        <p>Try widening the price range or clearing the search.</p>
+        <a href="{% url 'catalog:product_list' %}" class="btn btn-primary">Browse everything</a>
+      </div>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}

@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+
+{% block title %}Order {{ order.order_number }} · {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+<div class="breadcrumbs">
+  <a href="{% url 'catalog:home' %}">Home</a><span class="sep">/</span>
+  {% if is_buyer %}<a href="{% url 'orders:order_list' %}">Orders</a><span class="sep">/</span>{% endif %}
+  <span>{{ order.order_number }}</span>
+</div>
+
+<div class="page-head">
+  <div>
+    <h1>Order {{ order.order_number }}</h1>
+    <p>Placed on {{ order.placed_at|date:"d M Y, H:i" }} · paid via {{ order.payment_method }}</p>
+  </div>
+  <span class="status status-{{ order.status|lower }}">{{ order.get_status_display }}</span>
+</div>
+
+<div class="two-col-wide">
+  <div class="stack">
+    <div class="panel">
+      <h3>Items from {{ order.seller.business_name }}</h3>
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Product</th>
+              <th class="num">Price</th>
+              <th class="num">Qty</th>
+              <th class="num">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in order.items.all %}
+              <tr>
+                <td>
+                  <div class="cell-product">
+                    {% if item.product_image %}
+                      <img src="{{ item.product_image.url }}" alt="" class="cell-thumb">
+                    {% else %}
+                      <div class="cell-thumb-empty">{{ item.product_name|slice:":1"|upper }}</div>
+                    {% endif %}
+                    <div>
+                      {% if item.product %}
+                        <a href="{{ item.product.get_absolute_url }}">{{ item.product_name }}</a>
+                      {% else %}
+                        {{ item.product_name }}
+                      {% endif %}
+                      <small class="muted" style="display:block;">SKU {{ item.product_sku }}</small>
+                    </div>
+                  </div>
+                </td>
+                <td class="num">{{ item.unit_price }}</td>
+                <td class="num">{{ item.quantity }}</td>
+                <td class="num">{{ item.line_total }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="totals">
+        <div class="totals-row"><span>Subtotal</span><span>{{ order.subtotal }}</span></div>
+        <div class="totals-row"><span>Shipping</span><span>{{ order.shipping_fee }}</span></div>
+        <div class="totals-row grand"><span>Total</span><span>{{ order.total }}</span></div>
+      </div>
+    </div>
+
+    {% if is_buyer and order.is_cancellable %}
+      <div class="panel">
+        <h3>Need to cancel?</h3>
+        <p class="muted">Cancelling releases reserved stock back to the seller.</p>
+        <form action="{% url 'orders:order_cancel' order.order_number %}" method="post">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-danger btn-sm">Cancel this order</button>
+        </form>
+      </div>
+    {% endif %}
+  </div>
+
+  <aside class="stack">
+    <div class="panel">
+      <h3>Delivery address</h3>
+      <p style="margin:0;font-size:.9rem;">
+        <strong>{{ order.ship_to_name }}</strong><br>
+        {% if order.ship_to_phone %}{{ order.ship_to_phone }}<br>{% endif %}
+        {{ order.ship_to_address|linebreaksbr }}
+      </p>
+      {% if order.tracking_number %}
+        <div class="divider"></div>
+        <p style="margin:0;font-size:.9rem;">
+          <strong>Tracking number</strong><br>{{ order.tracking_number }}
+        </p>
+      {% endif %}
+      {% if order.notes %}
+        <div class="divider"></div>
+        <p style="margin:0;font-size:.9rem;"><strong>Notes</strong><br>{{ order.notes }}</p>
+      {% endif %}
+    </div>
+
+    <div class="panel">
+      <h3>Progress</h3>
+      <ul class="timeline">
+        <li class="done">
+          <strong>Order placed</strong><br>
+          <small class="muted">{{ order.placed_at|date:"d M Y, H:i" }}</small>
+        </li>
+        <li class="{% if order.payment_status == 'PAID' %}done{% endif %}">
+          <strong>Payment confirmed</strong><br>
+          <small class="muted">{{ order.get_payment_status_display }}</small>
+        </li>
+        <li class="{% if order.status == 'DELIVERED' or order.status == 'SHIPPED' %}done{% elif order.status == 'PROCESSING' %}current{% elif order.status == 'CANCELLED' %}done{% endif %}">
+          <strong>Being prepared</strong>
+        </li>
+        <li class="{% if order.status == 'DELIVERED' or order.status == 'SHIPPED' %}done{% elif order.status == 'PROCESSING' %}current{% endif %}">
+          <strong>Shipped</strong>
+        </li>
+        <li class="{% if order.status == 'DELIVERED' %}done{% elif order.status == 'SHIPPED' %}current{% endif %}">
+          <strong>Delivered</strong>
+        </li>
+      </ul>
+    </div>
+
+    {% if is_seller %}
+      <div class="panel">
+        <h3>Fulfil this order</h3>
+        <p class="muted" style="font-size:.85rem;">
+          Buyer: <a href="mailto:{{ order.buyer.email }}">{{ order.buyer.email }}</a><br>
+          Your payout: <strong>{{ order.seller_payout }}</strong>
+          <span class="muted">(after {{ order.commission }} commission)</span>
+        </p>
+
+        <form action="{% url 'orders:seller_order_update' order.order_number %}" method="post">
+          {% csrf_token %}
+          <div class="form-field">
+            <label for="status">Update status</label>
+            <select name="status" id="status">
+              {% if order.status == "PAID" %}<option value="PROCESSING">Start preparing</option>{% endif %}
+              {% if order.status == "PROCESSING" %}<option value="SHIPPED">Mark as shipped</option>{% endif %}
+              {% if order.status == "SHIPPED" %}<option value="DELIVERED">Mark as delivered</option>{% endif %}
+              {% if order.is_cancellable %}<option value="CANCELLED">Cancel order</option>{% endif %}
+            </select>
+          </div>
+          <div class="form-field">
+            <label for="tracking_number">Tracking number</label>
+            <input type="text" name="tracking_number" id="tracking_number"
+                   value="{{ order.tracking_number }}" placeholder="Required to ship">
+          </div>
+          <button type="submit" class="btn btn-primary" style="width:100%;">Save</button>
+        </form>
+      </div>
+    {% endif %}
+  </aside>
+</div>
+{% endblock %}

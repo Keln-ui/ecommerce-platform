@@ -1,0 +1,113 @@
+{% extends "backoffice/base.html" %}
+
+{% block title %}Orders{% endblock %}
+{% block nav_orders %}active{% endblock %}
+
+{% block content %}
+<div class="bo-head">
+  <div>
+    <h1>Orders</h1>
+    <p>{{ total_orders }} order{{ total_orders|pluralize }} placed across all stores.</p>
+  </div>
+  <div class="bo-head-actions">
+    <a href="{% url 'admin:orders_order_changelist' %}" class="btn btn-ghost">Open in Django admin</a>
+  </div>
+</div>
+
+<div class="filter-chips">
+  <a class="chip {% if not status and not request.GET.unpaid %}active{% endif %}"
+     href="{% url 'backoffice:orders' %}">All <b>{{ total_orders }}</b></a>
+  {% for tab in status_tabs %}
+    <a class="chip {% if status == tab.value %}active{% endif %}" href="?status={{ tab.value }}">
+      {{ tab.label }} <b>{{ tab.count }}</b>
+    </a>
+  {% endfor %}
+  <a class="chip {% if request.GET.unpaid == '1' %}active{% endif %}" href="?unpaid=1">
+    Needs payment <b>{{ unpaid_count }}</b>
+  </a>
+</div>
+
+<form method="get" class="filter-bar">
+  <input type="search" name="q" value="{{ query }}" placeholder="Search order number, buyer or store..." aria-label="Search orders">
+  <select name="status" aria-label="Status">
+    <option value="">Any status</option>
+    {% for value, label in status_choices %}
+      <option value="{{ value }}" {% if status == value %}selected{% endif %}>{{ label }}</option>
+    {% endfor %}
+  </select>
+  <button type="submit" class="btn btn-primary">Apply</button>
+  <a href="{% url 'backoffice:orders' %}" class="btn btn-ghost">Reset</a>
+</form>
+
+<div class="card">
+  <div class="card-head">
+    <h2>{{ page_obj.paginator.count }} matching order{{ page_obj.paginator.count|pluralize }}</h2>
+    <span class="small muted">Cancelling restocks automatically</span>
+  </div>
+
+  {% if orders %}
+    <div class="table-wrap">
+      <table class="data">
+        <thead>
+          <tr>
+            <th>Order</th>
+            <th>Buyer</th>
+            <th>Store</th>
+            <th class="num">Total</th>
+            <th class="num">Payout</th>
+            <th>Payment</th>
+            <th>Status</th>
+            <th style="min-width:190px;">Move to</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for order in orders %}
+            <tr>
+              <td>
+                <a href="{% url 'orders:order_detail' order.order_number %}"><strong>{{ order.order_number }}</strong></a><br>
+                <small class="muted">{{ order.placed_at|date:"d M Y, H:i" }}</small>
+                {% if order.tracking_number %}<br><small class="muted">Tracking {{ order.tracking_number }}</small>{% endif %}
+              </td>
+              <td class="small">
+                {{ order.buyer.display_name|truncatechars:22 }}<br>
+                <span class="muted">{{ order.buyer.email|truncatechars:24 }}</span>
+              </td>
+              <td class="small">
+                <a href="{% url 'backoffice:seller_detail' order.seller_id %}">{{ order.seller.business_name|truncatechars:22 }}</a>
+              </td>
+              <td class="num">{{ order.total|floatformat:2 }}</td>
+              <td class="num muted">{{ order.seller_payout|floatformat:2 }}</td>
+              <td><span class="pill pill-{{ order.payment_status|lower }}">{{ order.get_payment_status_display }}</span></td>
+              <td><span class="pill pill-{{ order.status|lower }}">{{ order.get_status_display }}</span></td>
+              <td>
+                <form method="post" action="{% url 'backoffice:order_status' order.order_number %}"
+                      class="inline-status-form">
+                  {% csrf_token %}
+                  <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                  <select name="status" aria-label="New status for {{ order.order_number }}">
+                    {% for value, label in status_choices %}
+                      <option value="{{ value }}" {% if order.status == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                  </select>
+                  <input type="text" name="tracking_number" value="{{ order.tracking_number }}"
+                         placeholder="Tracking" aria-label="Tracking number" style="width:80px;padding:.25rem .4rem;border:1px solid var(--line);border-radius:6px;font:inherit;font-size:.78rem;">
+                  <button class="btn btn-primary btn-xs"
+                          {% if order.is_cancellable %}onclick="return confirm('Cancel {{ order.order_number }}? Stock will be returned to the seller.');"{% endif %}>
+                    Save
+                  </button>
+                </form>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% include "backoffice/includes/pagination.html" %}
+  {% else %}
+    <div class="empty">
+      <h3>No orders found</h3>
+      <p>Try a different search or clear the filters.</p>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

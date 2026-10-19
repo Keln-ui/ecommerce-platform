@@ -1,0 +1,104 @@
+{% extends "backoffice/base.html" %}
+
+{% block title %}Customers{% endblock %}
+{% block nav_customers %}active{% endblock %}
+
+{% block content %}
+<div class="bo-head">
+  <div>
+    <h1>Customers</h1>
+    <p>Buyers registered on the marketplace.</p>
+  </div>
+  <div class="bo-head-actions">
+    <a href="{% url 'admin:accounts_user_changelist' %}" class="btn btn-ghost">Open in Django admin</a>
+  </div>
+</div>
+
+<div class="kpi-grid">
+  <div class="kpi accent">
+    <div class="kpi-label">Registered buyers</div>
+    <div class="kpi-value">{{ summary.total }}</div>
+    <div class="kpi-hint">accounts with the buyer role</div>
+  </div>
+  <div class="kpi">
+    <div class="kpi-label">Placed an order</div>
+    <div class="kpi-value">{{ summary.with_orders }}</div>
+    <div class="kpi-hint">{% widthratio summary.with_orders|default:1 summary.total|default:1 100 %}% of buyers</div>
+  </div>
+  <div class="kpi warn">
+    <div class="kpi-label">Lifetime value</div>
+    <div class="kpi-value">{{ summary.revenue|floatformat:2 }}</div>
+    <div class="kpi-hint">across settled orders</div>
+  </div>
+</div>
+
+<form method="get" class="filter-bar">
+  <input type="search" name="q" value="{{ query }}" placeholder="Search email or name..." aria-label="Search customers">
+  <select name="sort" aria-label="Sort">
+    <option value="-revenue" {% if sort == "-revenue" %}selected{% endif %}>Highest spend</option>
+    <option value="-orders" {% if sort == "-orders" %}selected{% endif %}>Most orders</option>
+    <option value="newest" {% if sort == "newest" %}selected{% endif %}>Newest first</option>
+    <option value="name" {% if sort == "name" %}selected{% endif %}>Name A-Z</option>
+  </select>
+  <button type="submit" class="btn btn-primary">Apply</button>
+  <a href="{% url 'backoffice:customers' %}" class="btn btn-ghost">Reset</a>
+</form>
+
+<div class="card">
+  <div class="card-head">
+    <h2>{{ page_obj.paginator.count }} matching customer{{ page_obj.paginator.count|pluralize }}</h2>
+  </div>
+
+  {% if customers %}
+    <div class="table-wrap">
+      <table class="data">
+        <thead>
+          <tr>
+            <th>Customer</th>
+            <th>Location</th>
+            <th>Joined</th>
+            <th class="num">Orders</th>
+            <th class="num">Lifetime value</th>
+            <th>Last order</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for customer in customers %}
+            <tr>
+              <td>
+                <div class="cell-main">
+                  <span class="cell-avatar">{{ customer.display_name|slice:":1"|upper }}</span>
+                  <span class="cell-stack">
+                    <strong>{{ customer.display_name }}</strong>
+                    <small>{{ customer.email }}</small>
+                  </span>
+                </div>
+              </td>
+              <td class="small muted">
+                {{ customer.shipping_address|default:"&mdash;"|safe }}
+              </td>
+              <td class="small">{{ customer.date_joined|date:"d M Y" }}</td>
+              <td class="num">{{ customer.order_total }}</td>
+              <td class="num">{{ customer.revenue|floatformat:2 }}</td>
+              <td class="small muted">
+                {% if customer.last_order %}{{ customer.last_order|date:"d M Y" }}{% else %}Never{% endif %}
+              </td>
+              <td class="actions">
+                <a href="{% url 'backoffice:orders' %}?q={{ customer.email|urlencode }}" class="btn btn-ghost btn-xs">Orders</a>
+                <a href="{% url 'admin:accounts_user_change' customer.pk %}" class="btn btn-ghost btn-xs">Edit</a>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% include "backoffice/includes/pagination.html" %}
+  {% else %}
+    <div class="empty">
+      <h3>No customers found</h3>
+      <p>Try a different search term.</p>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

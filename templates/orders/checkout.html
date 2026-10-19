@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+
+{% block title %}Checkout · {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Checkout</h1>
+    <p>Your order will be split into {{ seller_count }} shipment{{ seller_count|pluralize:"s" }}, one per seller.</p>
+  </div>
+  <a href="{% url 'orders:cart' %}" class="btn btn-secondary btn-sm">Back to cart</a>
+</div>
+
+<form method="post">
+  {% csrf_token %}
+  <div class="two-col-wide">
+    <div class="stack">
+      <div class="panel">
+        <h3>Delivery details</h3>
+        {{ form.non_field_errors }}
+        <div class="form-field">
+          <label for="{{ form.name.id_for_label }}">Full name *</label>
+          {{ form.name }}
+          {{ form.name.errors }}
+        </div>
+        <div class="form-field">
+          <label for="{{ form.phone.id_for_label }}">Phone</label>
+          {{ form.phone }}
+          {{ form.phone.errors }}
+        </div>
+        <div class="form-field">
+          <label for="{{ form.address.id_for_label }}">Delivery address *</label>
+          {{ form.address }}
+          {{ form.address.errors }}
+        </div>
+      </div>
+
+      <div class="panel">
+        <h3>Payment method</h3>
+        <div class="form-field">
+          <label for="{{ form.payment_method.id_for_label }}" class="sr-only">Payment method</label>
+          {{ form.payment_method }}
+          {{ form.payment_method.errors }}
+        </div>
+        <p class="muted" style="font-size:.82rem;">
+          This is a demo checkout — no real payment is processed. Orders are marked paid
+          straight away so you can walk through the seller fulfilment flow.
+        </p>
+      </div>
+
+      <div class="panel">
+        <h3>Order notes</h3>
+        <div class="form-field">
+          <label for="{{ form.notes.id_for_label }}">Note for the sellers</label>
+          {{ form.notes }}
+          {{ form.notes.errors }}
+        </div>
+      </div>
+    </div>
+
+    <aside>
+      <div class="panel">
+        <h3>Review your order</h3>
+
+        {% for group in groups.values %}
+          <div style="margin-bottom:.85rem;">
+            <small class="muted">
+              <a href="{{ group.seller.get_absolute_url }}">{{ group.seller.business_name }}</a>
+              &middot; {{ group.items|length }} item{{ group.items|length|pluralize }}
+            </small>
+            <div style="display:flex;justify-content:space-between;font-size:.85rem;">
+              <span>Subtotal</span><span>{{ group.subtotal }}</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:.85rem;">
+              <span>Shipping</span><span>{{ group.shipping }}</span>
+            </div>
+          </div>
+        {% endfor %}
+
+        <div class="divider"></div>
+
+        <div class="totals">
+          <div class="totals-row">
+            <span>Items ({{ item_count }})</span>
+            <span>{{ subtotal }}</span>
+          </div>
+          <div class="totals-row">
+            <span>Shipping ({{ seller_count }})</span>
+            <span>{{ shipping_fee }}</span>
+          </div>
+          <div class="totals-row grand">
+            <span>Total</span>
+            <span>{{ total }}</span>
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-lg" style="width:100%;margin-top:1rem;">Place order</button>
+      </div>
+    </aside>
+  </div>
+</form>
+{% endblock %}

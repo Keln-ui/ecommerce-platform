@@ -1,0 +1,780 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ SITE_NAME }}</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <style>
+        /* Hero Section */
+        .hero {
+            background: linear-gradient(135deg, #2f5bea 0%, #6f42c1 100%);
+            color: #fff;
+            border-radius: var(--radius);
+            padding: 3rem 2rem;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .hero h1 {
+            margin: 0 0 1rem;
+            font-size: 2.25rem;
+            line-height: 1.2;
+        }
+        .hero p {
+            margin: 0 0 1.75rem;
+            opacity: 0.95;
+            max-width: 700px;
+            margin-inline: auto;
+            font-size: 1.1rem;
+        }
+        .hero-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .hero-stats {
+            display: flex;
+            justify-content: center;
+            gap: 3rem;
+            margin-top: 2rem;
+            flex-wrap: wrap;
+        }
+        .hero-stat strong {
+            display: block;
+            font-size: 1.75rem;
+            margin-bottom: 0.25rem;
+        }
+        .hero-stat span {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        /* Section Headers */
+        .section-head {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            margin: 2.5rem 0 1rem;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        .section-head h2 {
+            margin: 0;
+            font-size: 1.35rem;
+        }
+        .section-head a {
+            font-size: 0.9rem;
+            color: var(--brand);
+        }
+
+        /* Product Grid */
+        .home-product-grid {
+            display: grid;
+            gap: 1rem;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+        }
+
+        .home-product-card {
+            background: var(--card);
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            transition: box-shadow 0.2s, transform 0.2s;
+        }
+        .home-product-card:hover {
+            box-shadow: var(--shadow);
+            transform: translateY(-2px);
+        }
+        .home-product-media {
+            position: relative;
+            aspect-ratio: 1;
+            background: #f0f2f6;
+            overflow: hidden;
+        }
+        .home-product-media img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .home-product-media .placeholder-img {
+            width: 100%;
+            height: 100%;
+            display: grid;
+            place-items: center;
+            font-size: 2rem;
+            font-weight: 700;
+            color: #b7bdc9;
+        }
+        .home-product-card-flags {
+            position: absolute;
+            top: 0.5rem;
+            left: 0.5rem;
+            display: flex;
+            gap: 0.35rem;
+            flex-wrap: wrap;
+        }
+        .home-flag {
+            padding: 0.15rem 0.5rem;
+            border-radius: 999px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: #fff;
+        }
+        .home-flag-sale { background: var(--danger); }
+        .home-flag-featured { background: var(--brand); }
+        .home-flag-out { background: #6b7280; }
+
+        .home-product-info { padding: 1rem; display: flex; flex-direction: column; gap: 0.3rem; }
+        .home-product-store {
+            font-size: 0.75rem;
+            color: var(--ink-soft);
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            margin-bottom: 0.25rem;
+        }
+        .home-product-name {
+            margin: 0 0 0.3rem;
+            font-size: 0.95rem;
+            line-height: 1.35;
+        }
+        .home-product-name a { color: var(--ink); }
+        .home-product-name a:hover { color: var(--brand); }
+        .home-product-rating {
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+            font-size: 0.8rem;
+            color: var(--ink-soft);
+        }
+        .home-product-stars { color: #f0a500; letter-spacing: 0.05em; }
+        .home-product-price-row {
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+            margin-top: auto;
+            padding-top: 0.5rem;
+        }
+        .home-product-price { font-size: 1.1rem; font-weight: 800; }
+        .home-product-was { text-decoration: line-through; color: var(--ink-soft); font-size: 0.85rem; }
+        .home-product-discount { color: var(--accent); font-weight: 700; font-size: 0.8rem; }
+        .home-product-stock { color: var(--warn); font-size: 0.78rem; font-weight: 600; }
+        .home-product-btn {
+            display: block;
+            margin-top: auto;
+            padding: 0.7rem 1rem;
+            background: var(--brand);
+            color: #fff;
+            text-align: center;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        .home-product-btn:hover { background: var(--brand-dark); text-decoration: none; }
+
+        /* Category Grid */
+        .category-grid {
+            display: grid;
+            gap: 1rem;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+        }
+        .category-card {
+            background: var(--card);
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            padding: 1.25rem 1rem;
+            text-align: center;
+            transition: all 0.2s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .category-card:hover {
+            border-color: var(--brand);
+            box-shadow: var(--shadow);
+            transform: translateY(-2px);
+            text-decoration: none;
+        }
+        .category-card h3 {
+            margin: 0;
+            font-size: 1rem;
+            color: var(--ink);
+        }
+        .category-count {
+            font-size: 0.8rem;
+            color: var(--ink-soft);
+        }
+        .category-btn {
+            display: inline-block;
+            margin-top: 0.5rem;
+            padding: 0.45rem 1rem;
+            background: var(--brand);
+            color: #fff;
+            text-decoration: none;
+            border-radius: 7px;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+        .category-btn:hover { background: var(--brand-dark); text-decoration: none; }
+
+        /* Newsletter / CTA */
+        .newsletter-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+            border-radius: var(--radius);
+            padding: 2.5rem 2rem;
+            text-align: center;
+            margin: 2.5rem 0;
+        }
+        .newsletter-section h3 {
+            margin: 0 0 0.5rem;
+            font-size: 1.5rem;
+        }
+        .newsletter-section p {
+            margin: 0 0 1.25rem;
+            opacity: 0.95;
+        }
+        .newsletter-form {
+            display: flex;
+            gap: 0.5rem;
+            max-width: 450px;
+            margin: 0 auto;
+            flex-wrap: wrap;
+        }
+        .newsletter-form input {
+            flex: 1;
+            min-width: 220px;
+            padding: 0.6rem 1rem;
+            border: 0;
+            border-radius: 8px;
+            font: inherit;
+            font-size: 0.95rem;
+        }
+        .newsletter-form button {
+            padding: 0.6rem 1.5rem;
+            border: 0;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            background: #fff;
+            color: var(--brand);
+            cursor: pointer;
+        }
+        .newsletter-form button:hover { background: #f7f8fa; }
+
+        /* Trust Badges */
+        .trust-section {
+            background: var(--card);
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            padding: 2rem 0;
+            margin-bottom: 2rem;
+        }
+        .trust-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            text-align: center;
+        }
+        .trust-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .trust-icon { font-size: 2rem; margin-bottom: 0.25rem; }
+        .trust-item h4 { margin: 0; font-size: 0.95rem; color: var(--ink); }
+        .trust-item p { margin: 0; font-size: 0.85rem; color: var(--ink-soft); }
+
+        /* Empty State */
+        .empty-state { text-align: center; padding: 3rem 1rem; color: var(--ink-soft); }
+        .empty-state h3 { color: var(--ink); margin: 0.5rem 0; }
+
+        /* Ad Card */
+        .ad-section { margin: 2.5rem 0; }
+        .ad-card {
+            background: linear-gradient(135deg, #2f5bea 0%, #6f42c1 100%);
+            color: #fff;
+            border-radius: var(--radius);
+            overflow: hidden;
+            position: relative;
+        }
+        .ad-card-content {
+            position: relative;
+            z-index: 1;
+            padding: 2.5rem 2rem;
+            text-align: center;
+        }
+        .ad-card h2 {
+            margin: 0 0 0.75rem;
+            font-size: 1.75rem;
+        }
+        .ad-card p {
+            margin: 0 0 1.5rem;
+            opacity: 0.95;
+            max-width: 600px;
+            margin-inline: auto;
+            font-size: 1.05rem;
+        }
+        .ad-card .btn {
+            display: inline-block;
+            background: #fff;
+            color: var(--brand);
+            padding: 0.7rem 1.5rem;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 0.95rem;
+        }
+        .ad-card .btn:hover { background: #f7f8fa; color: var(--brand-dark); }
+
+        /* Product Marquee inside Ad Card */
+        .ad-marquee {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 150px;
+            overflow: hidden;
+            background: rgba(0,0,0,0.15);
+            border-top: 1px solid rgba(255,255,255,0.2);
+        }
+        .ad-marquee-track {
+            display: flex;
+            gap: 2rem;
+            animation: adMarquee 20s linear infinite;
+            width: max-content;
+            padding: 1rem 0;
+        }
+        .ad-marquee-track:hover { animation-play-state: paused; }
+        .ad-marquee-item {
+            flex: 0 0 auto;
+            width: 110px;
+            text-align: center;
+        }
+        .ad-marquee-img {
+            width: 110px;
+            height: 110px;
+            border-radius: 12px;
+            object-fit: cover;
+            background: rgba(255,255,255,0.1);
+            border: 2px solid rgba(255,255,255,0.3);
+        }
+        .ad-marquee-name {
+            margin-top: 0.5rem;
+            font-size: 0.8rem;
+            color: #fff;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 110px;
+        }
+        @keyframes adMarquee {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+
+        /* Header / Navigation */
+        .site-header {
+            background: var(--card);
+            border-bottom: 1px solid var(--line);
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+        .nav-inner {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            flex-wrap: wrap;
+            padding: 0.75rem 0;
+        }
+        .nav-left {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        .nav-center {
+            flex: 1;
+            min-width: 260px;
+            max-width: 560px;
+        }
+        .nav-search {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: #f6f7f9;
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .nav-search input {
+            flex: 1;
+            padding: 0.55rem 1rem;
+            border: 0;
+            background: transparent;
+            font: inherit;
+            font-size: 0.92rem;
+            outline: none;
+        }
+        .nav-search input::placeholder { color: var(--ink-soft); }
+        .nav-search button {
+            padding: 0.55rem 1rem;
+            border: 0;
+            background: var(--brand);
+            color: #fff;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+        .nav-search button:hover { background: var(--brand-dark); }
+        .nav-right {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-weight: 700;
+            color: var(--ink);
+            text-decoration: none;
+        }
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            font-size: 0.9rem;
+        }
+        .nav-links a {
+            color: var(--ink-soft);
+            font-weight: 500;
+        }
+        .nav-links a:hover { color: var(--ink); text-decoration: none; }
+        .cart-link { position: relative; color: var(--ink-soft); font-weight: 500; }
+        .cart-badge {
+            display: inline-grid; place-items: center; min-width: 20px; height: 20px;
+            padding: 0 5px; border-radius: 999px; background: var(--brand); color: #fff;
+            font-size: 0.7rem; font-weight: 700; position: absolute; top: -8px; right: -8px;
+        }
+
+        @media (max-width: 768px) {
+            .nav-inner { flex-direction: column; align-items: stretch; gap: 0.75rem; }
+            .nav-center { min-width: auto; max-width: none; order: 3; width: 100%; }
+            .nav-left { order: 1; }
+            .nav-right { order: 2; justify-content: flex-end; }
+            .nav-search { flex-direction: column; align-items: stretch; gap: 0; }
+            .nav-search input { border-radius: 8px 8px 0 0; border-bottom: 1px solid var(--line); }
+            .nav-search button { border-radius: 0 0 8px 8px; width: 100%; }
+        }
+        @media (max-width: 640px) {
+            .hero { padding: 2rem 1rem; }
+            .hero h1 { font-size: 1.75rem; }
+            .hero-actions { flex-direction: column; align-items: center; }
+            .newsletter-form { flex-direction: column; align-items: stretch; }
+            .newsletter-form input { min-width: auto; }
+            .ad-card-content { padding: 1.5rem 1rem; }
+            .ad-card h2 { font-size: 1.5rem; }
+            .ad-marquee-item { width: 90px; }
+            .ad-marquee-img { width: 90px; height: 90px; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="site-header">
+        <div class="container nav-inner">
+            <div class="nav-left">
+                <a href="{% url 'catalog:home' %}" class="nav-brand">
+                    <img src="{% static 'images/logo.png' %}" alt="{{ SITE_NAME }} logo" class="brand-mark" style="width: 36px; height: 36px; object-fit: contain; border-radius: 8px;">
+                    <span class="brand-text" style="font-size: 1.25rem;">{{ SITE_NAME }}</span>
+                </a>
+            </div>
+
+            <div class="nav-center">
+                <form action="{% url 'catalog:product_list' %}" method="get" class="nav-search">
+                    <input type="search" name="q" value="{{ query|default:'' }}" placeholder="Search products and stores…" aria-label="Search products">
+                    <button type="submit">Search</button>
+                </form>
+            </div>
+
+            <div class="nav-right">
+                <div class="nav-links">
+                    <a href="{% url 'catalog:product_list' %}">Shop</a>
+                    <a href="{% url 'orders:cart' %}" class="cart-link">
+                        Cart{% if cart_count %}<span class="cart-badge">{{ cart_count }}</span>{% endif %}
+                    </a>
+                    {% if user.is_authenticated %}
+                        {% if user.can_sell %}
+                            <a href="{% url 'sellers:dashboard' %}">Dashboard</a>
+                        {% elif user.is_seller %}
+                            <a href="{% url 'accounts:seller_status' %}">Store status</a>
+                        {% else %}
+                            <a href="{% url 'accounts:seller_onboard' %}" class="btn btn-primary btn-sm">Sell with us</a>
+                        {% endif %}
+                        <span style="font-weight: 600; color: var(--ink); margin-left: 0.75rem;">{{ user.display_name }}</span>
+                        <a href="{% url 'accounts:logout' %}" style="color: var(--brand); font-weight: 500; margin-left: 0.5rem;">Log out</a>
+                    {% else %}
+                        <a href="{% url 'accounts:login' %}">Log in</a>
+                        <a href="{% url 'accounts:register' %}" class="btn btn-primary btn-sm">Sign up</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <h1>{{ SITE_NAME }}</h1>
+        <p>A multi-vendor marketplace where independent sellers run their own storefronts. Shop unique products across thousands of stores in one checkout.</p>
+        <div class="hero-actions">
+            <a href="{% url 'catalog:product_list' %}" class="btn btn-primary btn-lg">Start Shopping</a>
+            <a href="{% url 'accounts:seller_onboard' %}" class="btn btn-secondary btn-lg">Become a Seller</a>
+        </div>
+        <div class="hero-stats">
+            <div class="hero-stat">
+                <strong>{{ product_total }}</strong>
+                <span>Products</span>
+            </div>
+            <div class="hero-stat">
+                <strong>{{ categories|length }}</strong>
+                <span>Categories</span>
+            </div>
+            <div class="hero-stat">
+                <strong>{{ sellers|length }}</strong>
+                <span>Sellers</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- Trust Badges -->
+    <section class="trust-section">
+        <div class="trust-grid">
+            <div class="trust-item">
+                <span class="trust-icon">🔒</span>
+                <h4>Secure Payments</h4>
+                <p>Shop with confidence</p>
+            </div>
+            <div class="trust-item">
+                <span class="trust-icon">🚚</span>
+                <h4>Fast Shipping</h4>
+                <p>Reliable delivery</p>
+            </div>
+            <div class="trust-item">
+                <span class="trust-icon">🤝</span>
+                <h4>Independent Sellers</h4>
+                <p>Support small businesses</p>
+            </div>
+            <div class="trust-item">
+                <span class="trust-icon">📦</span>
+                <h4>Easy Returns</h4>
+                <p>Hassle-free policy</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Advertisement Card -->
+    <section class="ad-section">
+        <div class="ad-card">
+            <div class="ad-card-content">
+                <h2>🎁 Summer Sale – Up to 50% Off</h2>
+                <p>Shop our biggest sale of the season across electronics, fashion, home &amp; more. Limited-time deals from top sellers.</p>
+                <a href="{% url 'catalog:product_list' %}?on_sale=1" class="btn">Shop the Sale</a>
+            </div>
+            <div class="ad-marquee">
+                <div class="ad-marquee-track">
+                    {% for product in newest %}
+                    <div class="ad-marquee-item">
+                        {% if product.primary_image %}
+                            <img src="{{ product.primary_image.image.url }}" alt="{{ product.primary_image.alt_text|default:product.name }}" class="ad-marquee-img" loading="lazy">
+                        {% else %}
+                            <div style="width:110px;height:110px;border-radius:12px;background:rgba(255,255,255,0.1);border:2px solid rgba(255,255,255,0.3);display:grid;place-items:center;color:rgba(255,255,255,0.6);font-size:2rem;">
+                                {{ product.name|slice:":1"|upper }}
+                            </div>
+                        {% endif %}
+                        <div class="ad-marquee-name">{{ product.name|truncatechars:18 }}</div>
+                    </div>
+                    {% endfor %}
+                    <!-- Duplicate for seamless loop -->
+                    {% for product in newest %}
+                    <div class="ad-marquee-item">
+                        {% if product.primary_image %}
+                            <img src="{{ product.primary_image.image.url }}" alt="{{ product.primary_image.alt_text|default:product.name }}" class="ad-marquee-img" loading="lazy">
+                        {% else %}
+                            <div style="width:110px;height:110px;border-radius:12px;background:rgba(255,255,255,0.1);border:2px solid rgba(255,255,255,0.3);display:grid;place-items:center;color:rgba(255,255,255,0.6);font-size:2rem;">
+                                {{ product.name|slice:":1"|upper }}
+                            </div>
+                        {% endif %}
+                        <div class="ad-marquee-name">{{ product.name|truncatechars:18 }}</div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Featured Products -->
+    {% if featured %}
+    <section>
+        <div class="section-head">
+            <h2>✨ Featured Products</h2>
+            <a href="{% url 'catalog:product_list' %}?sort=popular">View all</a>
+        </div>
+        <div class="home-product-grid">
+            {% for product in featured %}
+            <article class="home-product-card">
+                <div class="home-product-media">
+                    {% if product.primary_image %}
+                        <img src="{{ product.primary_image.image.url }}" alt="{{ product.primary_image.alt_text|default:product.name }}" loading="lazy">
+                    {% else %}
+                        <div class="placeholder-img">{{ product.name|slice:":1"|upper }}</div>
+                    {% endif %}
+                    <div class="home-product-card-flags">
+                        {% if product.discount_percent %}<span class="home-flag home-flag-sale">-{{ product.discount_percent }}%</span>{% endif %}
+                        {% if product.is_featured %}<span class="home-flag home-flag-featured">Featured</span>{% endif %}
+                        {% if product.is_out_of_stock %}<span class="home-flag home-flag-out">Out of stock</span>{% endif %}
+                    </div>
+                </div>
+                <div class="home-product-info">
+                    <a href="{{ product.seller.get_absolute_url }}" class="home-product-store">{{ product.seller.business_name }}</a>
+                    <h3 class="home-product-name"><a href="{{ product.get_absolute_url }}">{{ product.name }}</a></h3>
+                    <div class="home-product-rating">
+                        {% if product.rating_count %}
+                            <span class="home-product-stars">{% for i in "12345" %}{% if forloop.counter <= product.rating_average %}&#9733;{% else %}&#9734;{% endif %}{% endfor %}</span>
+                            <small>{{ product.rating_average }} ({{ product.rating_count }})</small>
+                        {% else %}
+                            <small class="muted">No reviews yet</small>
+                        {% endif %}
+                    </div>
+                    <div class="home-product-price-row">
+                        <span class="home-product-price">{{ product.price }}</span>
+                        {% if product.is_on_sale %}
+                            <span class="home-product-was">{{ product.compare_at_price }}</span>
+                            <span class="home-product-discount">-{{ product.discount_percent }}%</span>
+                        {% endif %}
+                    </div>
+                    {% if product.is_low_stock %}<span class="home-product-stock">Only {{ product.stock }} left</span>{% endif %}
+                    <a href="{{ product.get_absolute_url }}" class="home-product-btn">View Product</a>
+                </div>
+            </article>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+
+    <!-- Trending Products -->
+    {% if trending %}
+    <section>
+        <div class="section-head">
+            <h2>🔥 Trending Now</h2>
+            <a href="{% url 'catalog:product_list' %}">View all</a>
+        </div>
+        <div class="home-product-grid">
+            {% for product in trending %}
+            <article class="home-product-card">
+                <div class="home-product-media">
+                    {% if product.primary_image %}
+                        <img src="{{ product.primary_image.image.url }}" alt="{{ product.primary_image.alt_text|default:product.name }}" loading="lazy">
+                    {% else %}
+                        <div class="placeholder-img">{{ product.name|slice:":1"|upper }}</div>
+                    {% endif %}
+                    <div class="home-product-card-flags">
+                        {% if product.discount_percent %}<span class="home-flag home-flag-sale">-{{ product.discount_percent }}%</span>{% endif %}
+                        {% if product.is_featured %}<span class="home-flag home-flag-featured">Featured</span>{% endif %}
+                        {% if product.is_out_of_stock %}<span class="home-flag home-flag-out">Out of stock</span>{% endif %}
+                    </div>
+                </div>
+                <div class="home-product-info">
+                    <a href="{{ product.seller.get_absolute_url }}" class="home-product-store">{{ product.seller.business_name }}</a>
+                    <h3 class="home-product-name"><a href="{{ product.get_absolute_url }}">{{ product.name }}</a></h3>
+                    <div class="home-product-rating">
+                        {% if product.rating_count %}
+                            <span class="home-product-stars">{% for i in "12345" %}{% if forloop.counter <= product.rating_average %}&#9733;{% else %}&#9734;{% endif %}{% endfor %}</span>
+                            <small>{{ product.rating_average }} ({{ product.rating_count }})</small>
+                        {% else %}
+                            <small class="muted">No reviews yet</small>
+                        {% endif %}
+                    </div>
+                    <div class="home-product-price-row">
+                        <span class="home-product-price">{{ product.price }}</span>
+                        {% if product.is_on_sale %}
+                            <span class="home-product-was">{{ product.compare_at_price }}</span>
+                            <span class="home-product-discount">-{{ product.discount_percent }}%</span>
+                        {% endif %}
+                    </div>
+                    {% if product.is_low_stock %}<span class="home-product-stock">Only {{ product.stock }} left</span>{% endif %}
+                    <a href="{{ product.get_absolute_url }}" class="home-product-btn">View Product</a>
+                </div>
+            </article>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+
+    <!-- Newsletter -->
+    <section class="newsletter-section">
+        <h3>Join our newsletter</h3>
+        <p>Get the latest deals and new arrivals straight to your inbox.</p>
+        <form class="newsletter-form" action="#" method="post">
+            <input type="email" name="email" placeholder="Enter your email" required>
+            <button type="submit">Subscribe</button>
+        </form>
+    </section>
+
+    <!-- Categories -->
+    <section>
+        <div class="section-head">
+            <h2>Shop by Category</h2>
+        </div>
+        <div class="category-grid">
+            {% for category in categories %}
+            <a href="{{ category.get_absolute_url }}" class="category-card">
+                <h3>{{ category.name }}</h3>
+                <span class="category-count">{{ category.product_total }} products</span>
+                <span class="category-btn">Browse</span>
+            </a>
+            {% endfor %}
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="site-footer" style="background: var(--ink); color: #c9ced8; margin-top: 3rem; padding-top: 2.5rem;">
+        <div class="container" style="padding-bottom: 2rem;">
+            <div class="footer-inner" style="display: grid; gap: 2rem; grid-template-columns: 2fr 1fr 1fr 1fr;">
+                <div>
+                    <h4 style="color: #fff; margin: 0 0 0.5rem;">{{ SITE_NAME }}</h4>
+                    <p style="color: #c9ced8; font-size: 0.9rem; margin: 0;">A multi-vendor marketplace where independent sellers run their own storefronts.</p>
+                </div>
+                <div>
+                    <h5 style="color: #fff; margin: 0 0 0.6rem; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em;">Shop</h5>
+                    <a href="{% url 'catalog:product_list' %}" style="display: block; color: #c9ced8; font-size: 0.88rem; margin-bottom: 0.35rem;">All products</a>
+                    <a href="{% url 'catalog:product_list' %}?sort=popular" style="display: block; color: #c9ced8; font-size: 0.88rem; margin-bottom: 0.35rem;">Best sellers</a>
+                    <a href="{% url 'catalog:product_list' %}?on_sale=1" style="display: block; color: #c9ced8; font-size: 0.88rem; margin-bottom: 0.35rem;">On sale</a>
+                    <a href="{% url 'catalog:contact' %}" style="display: block; color: #c9ced8; font-size: 0.88rem; margin-bottom: 0.35rem;">Contact Us</a>
+                    <a href="{% url 'catalog:faq' %}" style="display: block; color: #c9ced8; font-size: 0.88rem; margin-bottom: 0.35rem;">FAQ</a>
+                </div>
+                <div>
+                    <h5 style="color: #fff; margin: 0 0 0.6rem; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em;">Sell</h5>
+                    <a href="{% url 'accounts:seller_onboard' %}" style="display: block; color: #c9ced8; font-size: 0.88rem; margin-bottom: 0.35rem;">Open a store</a>
+                    <a href="{% url 'accounts:register' %}" style="display: block; color: #c9ced8; font-size: 0.88rem; margin-bottom: 0.35rem;">Create an account</a>
+                </div>
+                <div>
+                    <h5 style="color: #fff; margin: 0 0 0.6rem; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em;">Account</h5>
+                    <a href="{% url 'accounts:profile' %}" style="display: block; color: #c9ced8; font-size: 0.88rem; margin-bottom: 0.35rem;">Profile</a>
+                    <a href="{% url 'orders:order_list' %}" style="display: block; color: #c9ced8; font-size: 0.88rem; margin-bottom: 0.35rem;">Your orders</a>
+                </div>
+            </div>
+            <div class="footer-bottom" style="border-top: 1px solid rgba(255,255,255,.12); padding: 1rem 0; margin-top: 2rem;">
+                <small style="color: #c9ced8;">&copy; {% now "Y" %} {{ SITE_NAME }}. Built By Coresync Digital Solutions.</small>
+            </div>
+        </div>
+    </footer>
+</body>
+</html>

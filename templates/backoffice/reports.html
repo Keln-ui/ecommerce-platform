@@ -1,0 +1,261 @@
+{% extends "backoffice/base.html" %}
+{% load static %}
+
+{% block title %}Reports{% endblock %}
+{% block nav_reports %}active{% endblock %}
+
+{% block content %}
+<div class="bo-head">
+  <div>
+    <h1>Reports</h1>
+    <p>Commission and payouts for the last {{ days }} day{{ days|pluralize }}.</p>
+  </div>
+  <div class="bo-head-actions">
+    <div class="filter-chips" style="margin:0;">
+      {% for value, label in range_choices %}
+        <a class="chip {% if value == days %}active{% endif %}" href="?days={{ value }}">{{ label }}</a>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<div class="kpi-grid">
+  <div class="kpi accent">
+    <div class="kpi-label">Gross merchandise value</div>
+    <div class="kpi-value">{{ grand_revenue|floatformat:2 }}</div>
+    <div class="kpi-hint">{{ grand.orders }} settled order{{ grand.orders|pluralize }}</div>
+  </div>
+  <div class="kpi">
+    <div class="kpi-label">Platform commission</div>
+    <div class="kpi-value">{{ grand.commission|floatformat:2 }}</div>
+    <div class="kpi-hint">{{ commission_rate }}% of each subtotal</div>
+  </div>
+  <div class="kpi warn">
+    <div class="kpi-label">Seller payouts owed</div>
+    <div class="kpi-value">{{ grand_payout|floatformat:2 }}</div>
+    <div class="kpi-hint">revenue less commission</div>
+  </div>
+  <div class="kpi">
+    <div class="kpi-label">Shipping collected</div>
+    <div class="kpi-value">{{ grand.shipping|floatformat:2 }}</div>
+    <div class="kpi-hint">passed through to sellers</div>
+  </div>
+</div>
+
+<div class="chart-row">
+  <div class="card">
+    <div class="card-head">
+      <h2>Revenue share by store</h2>
+      <span class="small muted">Gross merchandise value per seller</span>
+    </div>
+    <div class="chart-box"><canvas id="payoutChart"></canvas></div>
+  </div>
+  <div class="card">
+    <div class="card-head"><h2>Revenue share by category</h2></div>
+    <div class="chart-box"><canvas id="reportCategoryChart"></canvas></div>
+  </div>
+</div>
+
+<div class="card" style="margin-bottom:1.25rem;">
+  <div class="card-head">
+    <h2>Seller payouts</h2>
+    <span class="small muted">What each store has earned and owes</span>
+  </div>
+  {% if payout_rows %}
+    <div class="table-wrap">
+      <table class="data">
+        <thead>
+          <tr>
+            <th>Store</th>
+            <th class="num">Orders</th>
+            <th class="num">Gross revenue</th>
+            <th class="num">Commission</th>
+            <th class="num">Shipping</th>
+            <th class="num">Payout owed</th>
+            <th style="min-width:130px;">Share</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in payout_rows %}
+            <tr>
+              <td><a href="{% url 'backoffice:seller_detail' row.seller_id %}"><strong>{{ row.seller__business_name }}</strong></a></td>
+              <td class="num">{{ row.orders }}</td>
+              <td class="num">{{ row.revenue|floatformat:2 }}</td>
+              <td class="num muted">{{ row.commission|floatformat:2 }}</td>
+              <td class="num muted">{{ row.shipping|floatformat:2 }}</td>
+              <td class="num"><strong>{{ row.payout|floatformat:2 }}</strong></td>
+              <td>
+                <div class="bar-track">
+                  <div class="bar-fill" style="width:{% widthratio row.revenue grand_revenue 100 %}%"></div>
+                </div>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+        <tfoot>
+          <tr>
+            <td>Total</td>
+            <td class="num">{{ grand.orders }}</td>
+            <td class="num">{{ grand_revenue|floatformat:2 }}</td>
+            <td class="num">{{ grand.commission|floatformat:2 }}</td>
+            <td class="num">{{ grand.shipping|floatformat:2 }}</td>
+            <td class="num">{{ grand_payout|floatformat:2 }}</td>
+            <td></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  {% else %}
+    <div class="empty">
+      <h3>No settled orders in this period</h3>
+      <p>Widen the date range to see payouts.</p>
+    </div>
+  {% endif %}
+</div>
+
+<div class="grid-2" style="margin-bottom:1.25rem;">
+  <div class="card">
+    <div class="card-head"><h2>Revenue by category</h2></div>
+    {% if category_rows %}
+      <div class="table-wrap">
+        <table class="data">
+          <thead><tr><th>Category</th><th class="num">Units</th><th class="num">Revenue</th><th class="num">Share</th></tr></thead>
+          <tbody>
+            {% for row in category_rows %}
+              <tr>
+                <td>{{ row.product__category__name|default:"Uncategorised" }}</td>
+                <td class="num">{{ row.units }}</td>
+                <td class="num">{{ row.revenue|floatformat:2 }}</td>
+                <td class="num">
+                  {% widthratio row.revenue grand_revenue 100 %}%
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="empty"><p>No category sales in this period.</p></div>
+    {% endif %}
+  </div>
+
+  <div class="card">
+    <div class="card-head"><h2>Top buyers</h2></div>
+    {% if buyer_rows %}
+      <div class="table-wrap">
+        <table class="data">
+          <thead><tr><th>Buyer</th><th class="num">Orders</th><th class="num">Spend</th></tr></thead>
+          <tbody>
+            {% for row in buyer_rows %}
+              <tr>
+                <td class="small">{{ row.buyer__email|truncatechars:28 }}</td>
+                <td class="num">{{ row.orders }}</td>
+                <td class="num">{{ row.revenue|floatformat:2 }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="empty"><p>No buyer activity in this period.</p></div>
+    {% endif %}
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-head">
+    <h2>Best selling products</h2>
+    <span class="small muted">Top 25 by revenue</span>
+  </div>
+  {% if product_rows %}
+    <div class="table-wrap">
+      <table class="data">
+        <thead><tr><th>#</th><th>Product</th><th>Store</th><th class="num">Units</th><th class="num">Revenue</th></tr></thead>
+        <tbody>
+          {% for row in product_rows %}
+            <tr>
+              <td class="num muted">{{ forloop.counter }}</td>
+              <td>{{ row.product_name|truncatechars:44 }}</td>
+              <td class="small muted">{{ row.product__seller__business_name|truncatechars:24 }}</td>
+              <td class="num">{{ row.units }}</td>
+              <td class="num">{{ row.revenue|floatformat:2 }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="empty"><p>No product sales in this period.</p></div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ payout_rows|json_script:"bo-payouts" }}
+{{ category_rows|json_script:"bo-report-categories" }}
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+(function () {
+  if (typeof Chart === "undefined") return;
+
+  function read(id) {
+    var el = document.getElementById(id);
+    return el ? JSON.parse(el.textContent) : [];
+  }
+
+  Chart.defaults.font.family = "Inter, system-ui, sans-serif";
+  Chart.defaults.font.size = 11;
+  Chart.defaults.color = "#6b7382";
+  var grid = { color: "#eceff4" };
+
+  var payouts = document.getElementById("payoutChart");
+  if (payouts) {
+    var rows = read("bo-payouts");
+    new Chart(payouts, {
+      type: "doughnut",
+      data: {
+        labels: rows.map(function (r) { return r.seller__business_name; }),
+        datasets: [{
+          label: "Gross revenue",
+          data: rows.map(function (r) { return parseFloat(r.revenue); }),
+          backgroundColor: ["#2f5bea", "#0f9d58", "#c77700", "#0b5fa5", "#5b21b6", "#c62828", "#0b7285", "#5c7cfa"]
+        }]
+      },
+      options: {
+        maintainAspectRatio: false,
+        cutout: "55%",
+        plugins: {
+          legend: { position: "right", labels: { usePointStyle: true, boxWidth: 8 } },
+          tooltip: { callbacks: { label: function (c) {
+            var total = c.dataset.data.reduce(function (a, b) { return a + b; }, 0);
+            var pct = total ? ((c.parsed / total) * 100).toFixed(1) : "0";
+            return c.label + ": " + c.parsed.toFixed(2) + " (" + pct + "%)";
+          } } }
+        }
+      }
+    });
+  }
+
+  var categories = document.getElementById("reportCategoryChart");
+  if (categories) {
+    var cats = read("bo-report-categories");
+    new Chart(categories, {
+      type: "bar",
+      data: {
+        labels: cats.map(function (c) { return c.product__category__name || "Uncategorised"; }),
+        datasets: [{ label: "Revenue", data: cats.map(function (c) { return parseFloat(c.revenue); }),
+          backgroundColor: "#6f42c1", borderRadius: 4, maxBarThickness: 34 }]
+      },
+      options: {
+        indexAxis: "y",
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false },
+          tooltip: { callbacks: { label: function (c) { return c.parsed.x.toFixed(2); } } } },
+        scales: { x: { beginAtZero: true, grid: grid }, y: { grid: { display: false } } }
+      }
+    });
+  }
+})();
+</script>
+{% endblock %}
